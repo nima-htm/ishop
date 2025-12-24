@@ -38,6 +38,6 @@ npm run dev
 npm run build
 ```
 <div dir="rtl">
-
+> در این پروژه از فونت آراد استفاده گردیده است : https://github.com/MDarvishi5124/Arad
 
 </div>
