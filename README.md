@@ -1,5 +1,43 @@
-# Vue 3 + Vite
+# 🛍️ فروشگاه من (ishop)
 
-This template should help get you started developing with Vue 3 in Vite. The template uses Vue 3 `<script setup>` SFCs, check out the [script setup docs](https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup) to learn more.
+ فروشگاه من، پلتفرم خرید مدرن و کاملاً واکنش‌پذیر است که با تکنولوژی‌های جدید وب ساخته شده است. این برنامه به‌عنوان یک Progressive Web App (PWA) کار می‌کند و امکان استفاده آفلاین را فراهم می‌کند. با رابط کاربری زیبا و طراحی مدرن، تجربه کاربری خوبی خواهد بود و می تواند 
+ابزاری ساده برای مدیریت تراکنش ها، انبار داری شامل فاکتورهای حواله و رسید و... باشد.
 
-Learn more about IDE Support for Vue in the [Vue Docs Scaling up Guide](https://vuejs.org/guide/scaling-up/tooling.html#ide-support).
+
+
+<div dir="rtl">
+
+
+
+## ویژگی‌ها
+
+**بانک‌ داده محلی** - ذخیره‌سازی داده‌ها بدون نیاز به سرور
+
+**کارایی بالا** - بارگذاری سریع و عملیات فوری
+
+**رابط کاربری مدرن** - طراحی بصری زیبا و کاربرپسند
+
+## ابزارها
+
+- **Vue 3** 
+- **Vite** 
+- **Bubblewrap** 
+
+
+## 📦 نصب و راه‌اندازی
+</div>
+
+```bash
+# Dependecies
+npm install
+
+# Dev mode 
+npm run dev
+
+# Production build
+npm run build
+```
+<div dir="rtl">
+
+
+</div>
