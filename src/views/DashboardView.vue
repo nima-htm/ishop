@@ -7,12 +7,6 @@ import { formatNumber } from 'chart.js/helpers'
 
 ChartJS.register(ArcElement, Tooltip, Legend, BarElement, CategoryScale, LinearScale)
 
-// Initialize database
-onMounted(async () => {
-  await DatabaseService.init()
-  await updateData()
-})
-
 // Data service using IndexedDB
 const DataService = {
   async getTransactions() {
@@ -62,8 +56,9 @@ const expensesByCategory = ref({})
 const monthlySummary = ref({})
 const recentTransactions = ref([])
 
-onMounted(() => {
-  updateData()
+onMounted(async () => {
+  await DatabaseService.init()
+  await updateData()
 })
 
 const updateData = async () => {
@@ -164,14 +159,9 @@ const updateSummary = async () => {
   balance.value = totalIncome.value - totalExpenses.value
 }
 
-// Update summary when data changes
+// Update summary and chart when data changes
 watch([expensesByCategory, monthlySummary], async () => {
   await updateSummary()
-  updateChartData()
-}, { deep: true })
-
-// Update chart data when reactive data changes
-watch([expensesByCategory, monthlySummary], () => {
   updateChartData()
 }, { deep: true })
 </script>
@@ -196,22 +186,26 @@ watch([expensesByCategory, monthlySummary], () => {
     <div class="charts">
       <div class="chart-container">
         <h3>هزینه ها بر اساس دسته بندی</h3>
-        <Pie 
-          :data="pieChartData" 
-          :options="{ responsive: true, maintainAspectRatio: false }"
-          v-if="pieChartData.labels.length > 0"
-        />
-        <div v-else class="no-data">هیچ داده ای وجود ندارد</div>
+        <div class="chart-content">
+          <Pie 
+            :data="pieChartData" 
+            :options="{ responsive: true, maintainAspectRatio: false }"
+            v-if="pieChartData.labels.length > 0"
+          />
+          <div v-else class="no-data">هیچ داده ای وجود ندارد</div>
+        </div>
       </div>
 
       <div class="chart-container">
         <h3>گزارش ماهانه</h3>
-        <Bar 
-          :data="barChartData" 
-          :options="{ responsive: true, maintainAspectRatio: false }"
-          v-if="barChartData.labels.length > 0"
-        />
-        <div v-else class="no-data">هیچ داده ای وجود ندارد</div>
+        <div class="chart-content">
+          <Bar 
+            :data="barChartData" 
+            :options="{ responsive: true, maintainAspectRatio: false }"
+            v-if="barChartData.labels.length > 0"
+          />
+          <div v-else class="no-data">هیچ داده ای وجود ندارد</div>
+        </div>
       </div>
     </div>
 
@@ -360,20 +354,20 @@ watch([expensesByCategory, monthlySummary], () => {
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   border: 1px solid var(--border-color);
-  height: 350px;
+  overflow: hidden;
 }
 
 .chart-container h3 {
-  margin: 0 0 1.5rem 0;
+  margin: 0 0 1rem 0;
   color: var(--text-primary);
   font-size: 1.2rem;
 }
 
-.chart-wrapper {
-  height: 280px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.chart-content {
+  height: 300px;
+  width: 100%;
+  position: relative;
+  overflow: hidden;
 }
 
 .no-data {
@@ -467,7 +461,7 @@ watch([expensesByCategory, monthlySummary], () => {
     gap: 1rem;
   }
 
-  .card {
+ .card {
     padding: 1.25rem;
   }
 
@@ -478,7 +472,7 @@ watch([expensesByCategory, monthlySummary], () => {
 
   .card .amount {
     font-size: 1.5rem;
-  }
+ }
 
   .charts {
     grid-template-columns: 1fr;
@@ -486,13 +480,21 @@ watch([expensesByCategory, monthlySummary], () => {
   }
 
   .chart-container {
-    height: 300px;
     padding: 1rem;
+  }
+
+  .chart-container h3 {
+    font-size: 1.1rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .chart-content {
+    height: 250px;
   }
 
   .transactions-table {
     font-size: 0.9rem;
-  }
+ }
 
   .transactions-table th,
   .transactions-table td {
@@ -515,24 +517,28 @@ watch([expensesByCategory, monthlySummary], () => {
 
   .card {
     padding: 1rem;
-  }
+ }
 
   .card h3 {
     font-size: 0.8rem;
-  }
+ }
 
   .card .amount {
     font-size: 1.3rem;
-  }
+ }
 
   .chart-container {
-    height: 250px;
+    min-height: auto;
     padding: 0.75rem;
   }
 
   .chart-container h3 {
     font-size: 1rem;
-    margin-bottom: 1rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .chart-content {
+    height: 200px;
   }
 
   .transactions-table {
