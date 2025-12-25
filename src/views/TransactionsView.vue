@@ -59,7 +59,7 @@ const formatDate = (dateString) => {
         <thead>
           <tr>
             <th>تاریخ</th>
-            <th>عنوان</th>
+            <th class="th-section">عنوان</th>
             <th>دسته بندی</th>
             <th>نوع هزینه</th>
             <th>(تومان) مقدار </th>
@@ -140,15 +140,15 @@ const formatDate = (dateString) => {
   background: var(--bg-secondary);
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  overflow: hidden;
+  overflow: auto;
   border: 1px solid var(--border-color);
 }
 
 .transactions-table {
   width: 100%;
   border-collapse: collapse;
-      text-align: center;
-      direction: rtl;
+  text-align: center;
+  direction: rtl;
 }
 
 .transactions-table th,
@@ -162,7 +162,7 @@ const formatDate = (dateString) => {
 .transactions-table th {
   background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
   color: white;
-  font-weight: 700;
+  font-weight: 500;
   position: sticky;
   top: 0;
 }

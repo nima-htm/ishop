@@ -55,6 +55,14 @@ const isDarkMode = computed(() => {
       >
         افزودن تراکنش
       </RouterLink>
+      <RouterLink 
+        to="/settings" 
+        class="tab-link"
+        :class="{ 'active': activeTab === 'settings' }"
+        @click="activeTab = 'settings'"
+      >
+        تنظیمات
+      </RouterLink>
     </nav>
 
     <main class="tab-content">

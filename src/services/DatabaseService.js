@@ -187,6 +187,141 @@ class DatabaseService {
       request.onerror = () => reject(request.error);
     });
   }
+
+  async exportData() {
+    if (!this.db) await this.init();
+    
+    // Use a single transaction for both stores
+    const transaction = this.db.transaction(['transactions', 'settings'], 'readonly');
+    
+    return new Promise((resolve, reject) => {
+      const exportData = {};
+      let completedStores = 0;
+      
+      // Get all transactions
+      const transactionRequest = transaction.objectStore('transactions').getAll();
+      transactionRequest.onsuccess = () => {
+        exportData.transactions = transactionRequest.result;
+        completedStores++;
+        if (completedStores === 2) {
+          resolve(exportData);
+        }
+      };
+      transactionRequest.onerror = () => reject(transactionRequest.error);
+      
+      // Get all settings
+      const settingsRequest = transaction.objectStore('settings').getAll();
+      settingsRequest.onsuccess = () => {
+        exportData.settings = settingsRequest.result;
+        exportData.exportDate = new Date().toISOString();
+        exportData.version = '1.0';
+        completedStores++;
+        if (completedStores === 2) {
+          resolve(exportData);
+        }
+      };
+      settingsRequest.onerror = () => reject(settingsRequest.error);
+    });
+  }
+
+  async importData(importData) {
+    if (!this.db) await this.init();
+    
+    // Validate import data structure
+    if (!importData.transactions || !importData.settings) {
+      throw new Error('Invalid import data structure');
+    }
+
+    // Clear existing data using a single transaction
+    const transaction = this.db.transaction(['transactions', 'settings'], 'readwrite');
+    
+    return new Promise((resolve, reject) => {
+      let completedOperations = 0;
+      const totalOperations = 2; // transactions and settings
+      
+      // Clear and import transactions
+      const transactionStore = transaction.objectStore('transactions');
+      const clearTransactionsRequest = transactionStore.clear();
+      
+      clearTransactionsRequest.onsuccess = async () => {
+        try {
+          // Import transactions using put to preserve existing IDs
+          for (const transactionData of importData.transactions) {
+            await new Promise((res, rej) => {
+              const request = transactionStore.put(transactionData);
+              request.onsuccess = () => res(request.result);
+              request.onerror = () => rej(request.error);
+            });
+          }
+          completedOperations++;
+          if (completedOperations === totalOperations) {
+            resolve('Data imported successfully');
+          }
+        } catch (error) {
+          reject(error);
+        }
+      };
+      clearTransactionsRequest.onerror = () => reject(clearTransactionsRequest.error);
+      
+      // Clear and import settings
+      const settingsStore = transaction.objectStore('settings');
+      const clearSettingsRequest = settingsStore.clear();
+      
+      clearSettingsRequest.onsuccess = async () => {
+        try {
+          // Import settings
+          for (const setting of importData.settings) {
+            await new Promise((res, rej) => {
+              const request = settingsStore.put(setting);
+              request.onsuccess = () => res(request.result);
+              request.onerror = () => rej(request.error);
+            });
+          }
+          completedOperations++;
+          if (completedOperations === totalOperations) {
+            resolve('Data imported successfully');
+          }
+        } catch (error) {
+          reject(error);
+        }
+      };
+      clearSettingsRequest.onerror = () => reject(clearSettingsRequest.error);
+    });
+ }
+
+  async getDatabaseStats() {
+    if (!this.db) await this.init();
+    
+    // Use a single transaction for both stores
+    const transaction = this.db.transaction(['transactions', 'settings'], 'readonly');
+    
+    return new Promise((resolve, reject) => {
+      const stats = {};
+      let completedCounts = 0;
+      
+      // Count transactions
+      const transactionCount = transaction.objectStore('transactions').count();
+      transactionCount.onsuccess = () => {
+        stats.transactionCount = transactionCount.result;
+        completedCounts++;
+        if (completedCounts === 2) {
+          resolve(stats);
+        }
+      };
+      transactionCount.onerror = () => reject(transactionCount.error);
+      
+      // Count settings
+      const settingsCount = transaction.objectStore('settings').count();
+      settingsCount.onsuccess = () => {
+        stats.settingsCount = settingsCount.result;
+        completedCounts++;
+        if (completedCounts === 2) {
+          resolve(stats);
+        }
+      };
+      settingsCount.onerror = () => reject(settingsCount.error);
+    });
+  }
 }
 
 export default new DatabaseService();

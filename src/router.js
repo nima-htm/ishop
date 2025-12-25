@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import DashboardView from './views/DashboardView.vue'
 import TransactionsView from './views/TransactionsView.vue'
 import AddTransactionView from './views/AddTransactionView.vue'
+import SettingsView from './views/SettingsView.vue'
 
 const routes = [
   {
@@ -22,6 +23,11 @@ const routes = [
     path: '/add-transaction',
     name: 'add-transaction',
     component: AddTransactionView
+  },
+  {
+    path: '/settings',
+    name: 'settings',
+    component: SettingsView
   }
 ]
 
