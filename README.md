@@ -21,7 +21,10 @@
 
 - **Vue 3** 
 - **Vite** 
-- **Bubblewrap** 
+- **Bubblewrap**
+  
+[در این پروژه از فونت آراد استفاده گردیده است ](https://github.com/MDarvishi5124/Arad)
+
 
 
 ## 📦 نصب و راه‌اندازی
@@ -38,6 +41,5 @@ npm run dev
 npm run build
 ```
 <div dir="rtl">
-
-
+ 
 </div>
