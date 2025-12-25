@@ -2,6 +2,8 @@
 import { ref, onMounted } from 'vue'
 import DatabaseService from '../services/DatabaseService'
 import { formatNumber } from 'chart.js/helpers'
+import { formatDate as formatDateUtil } from '../utils/dateFormatter'
+
 // Initialize database
 onMounted(async () => {
   await DatabaseService.init()
@@ -34,7 +36,13 @@ const transactions = ref([])
 
 const loadTransactions = async () => {
   const allTransactions = await DataService.getTransactions()
-  transactions.value = allTransactions.reverse()
+  // Format dates when loading
+  transactions.value = await Promise.all(
+    allTransactions.reverse().map(async (transaction) => ({
+      ...transaction,
+      formattedDate: await formatDateUtil(transaction.date, 'YY/MM/DD')
+    }))
+  )
 }
 
 const deleteTransaction = async (id) => {
@@ -42,11 +50,9 @@ const deleteTransaction = async (id) => {
   await loadTransactions()
 }
 
-
-
-// Format date
-const formatDate = (dateString) => {
-  return new Date(dateString).toLocaleDateString()
+// Format date using the utility that respects user's setting
+const formatDate = async (dateString) => {
+  return await formatDateUtil(dateString, 'YYYY-MM-DD')
 }
 </script>
 
@@ -70,7 +76,7 @@ const formatDate = (dateString) => {
         </thead>
         <tbody>
           <tr v-for="transaction in transactions" :key="transaction.id">
-            <td>{{ formatDate(transaction.date) }}</td>
+            <td>{{ transaction.formattedDate }}</td>
             <td>{{ transaction.description }}</td>
             <td>{{ transaction.category }}</td>
             <td>

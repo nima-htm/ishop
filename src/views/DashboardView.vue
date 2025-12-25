@@ -4,6 +4,7 @@ import { Chart as ChartJS, ArcElement, Tooltip, Legend, BarElement, CategoryScal
 import { Pie, Bar } from 'vue-chartjs'
 import DatabaseService from '../services/DatabaseService'
 import { formatNumber } from 'chart.js/helpers'
+import { formatDate as formatDateUtil } from '../utils/dateFormatter'
 
 ChartJS.register(ArcElement, Tooltip, Legend, BarElement, CategoryScale, LinearScale)
 
@@ -65,7 +66,13 @@ const updateData = async () => {
   expensesByCategory.value = await DataService.getExpensesByCategory()
   monthlySummary.value = await DataService.getMonthlySummary()
   const allTransactions = await DataService.getTransactions()
-  recentTransactions.value = allTransactions.slice(-5).reverse()
+  // Format dates when loading
+  recentTransactions.value = await Promise.all(
+    allTransactions.slice(-5).reverse().map(async (transaction) => ({
+      ...transaction,
+      formattedDate: await formatDateUtil(transaction.date, 'YYYY-MM-DD')
+    }))
+  )
 }
 
 // Chart data
@@ -224,7 +231,7 @@ watch([expensesByCategory, monthlySummary], async () => {
           </thead>
           <tbody>
             <tr v-for="transaction in recentTransactions" :key="transaction.id">
-              <td>{{ new Date(transaction.date).toLocaleDateString() }}</td>
+              <td>{{transaction.formattedDate }}</td>
               <td>{{ transaction.description }}</td>
               <td>{{ transaction.category }}</td>
               <td>

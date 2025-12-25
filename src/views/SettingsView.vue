@@ -1,10 +1,12 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import DatabaseService from '../services/DatabaseService'
+import { updateDateFormat } from '../utils/dateFormatter'
 
 // Initialize database
 onMounted(async () => {
   await DatabaseService.init()
+  await loadDateFormat()
   await loadDatabaseStats()
 })
 
@@ -12,6 +14,7 @@ onMounted(async () => {
 const theme = ref('light')
 const language = ref('fa')
 const notifications = ref(true)
+const dateFormat = ref('Shamsi')
 
 // Database stats
 const databaseStats = ref({
@@ -23,6 +26,32 @@ const databaseStats = ref({
 const isExporting = ref(false)
 const isImporting = ref(false)
 const importFile = ref(null)
+
+// Load date format setting from database
+const loadDateFormat = async () => {
+  try {
+    const savedFormat = await DatabaseService.getSetting('dateFormat')
+    if (savedFormat) {
+      dateFormat.value = savedFormat
+    } else {
+      // Default to Shamsi
+      await DatabaseService.setSetting('dateFormat', 'Shamsi')
+    }
+  } catch (error) {
+    console.error('Error loading date format:', error)
+  }
+}
+
+// Save date format setting to database
+const saveDateFormat = async () => {
+  try {
+    await DatabaseService.setSetting('dateFormat', dateFormat.value)
+    // Update the cache in the utility
+    updateDateFormat(dateFormat.value)
+  } catch (error) {
+    console.error('Error saving date format:', error)
+  }
+}
 
 // Load database statistics
 const loadDatabaseStats = async () => {
@@ -211,7 +240,7 @@ const formatNumber = (num) => {
       
       <div class="setting-item">
         <label for="date_format">قالب تاریخ</label>
-        <select id="date_format" v-model="date_format">
+        <select id="date_format" v-model="dateFormat" @change="saveDateFormat">
           <option value="Shamsi">شمسی</option>
           <option value="Miladi">میلادی</option>
         </select>

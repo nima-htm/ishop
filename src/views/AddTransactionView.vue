@@ -2,6 +2,8 @@
 import { ref, onMounted } from 'vue'
 import DatabaseService from '../services/DatabaseService'
 import { formatNumber } from 'chart.js/helpers'
+import { formatDate as formatDateUtil } from '../utils/dateFormatter'
+
 // Initialize database
 onMounted(async () => {
  await DatabaseService.init()
@@ -70,7 +72,14 @@ onMounted(async () => {
 })
 
 const loadTransactions = async () => {
-  transactions.value = await DataService.getTransactions()
+  const allTransactions = await DataService.getTransactions()
+  // Format dates when loading
+  transactions.value = await Promise.all(
+    allTransactions.map(async (transaction) => ({
+      ...transaction,
+      formattedDate: await formatDateUtil(transaction.date, 'YYYY-MM-DD')
+    }))
+  )
 }
 
 // Reset form after submission
@@ -265,6 +274,7 @@ const editTransaction = (transaction) => {
           <div class="transaction-info">
             <span class="description">{{ transaction.description }}</span>
             <span class="category">{{ transaction.category }}</span>
+            <span class="date">{{ transaction.formattedDate }}</span>
           </div>
           <div class="transaction-details">
             <span class="type" :class="transaction.type">
@@ -495,6 +505,13 @@ input, select{
 .transaction-info .category {
   font-size: 0.875rem;
   color: var(--text-secondary);
+}
+
+.transaction-info .date {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  margin-top: 0.25rem;
 }
 
 .transaction-details {
