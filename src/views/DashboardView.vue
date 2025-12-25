@@ -24,7 +24,7 @@ const DataService = {
     
     transactions.forEach(transaction => {
       if (transaction.type === 'expense') {
-        categories[transaction.category] = (categories[transaction.category] || 0) + transaction.amount
+        categories[transaction.category] = (categories[transaction.category] || 0) + transaction.finalAmount
       }
     })
     
@@ -42,9 +42,9 @@ const DataService = {
       }
       
       if (transaction.type === 'income') {
-        monthlyData[month].income += transaction.amount
+        monthlyData[month].income += transaction.finalAmount
       } else {
-        monthlyData[month].expenses += transaction.amount
+        monthlyData[month].expenses += transaction.finalAmount
       }
     })
     
@@ -88,12 +88,12 @@ const barChartData = ref({
  labels: [],
   datasets: [
     {
-      label: 'Income',
+      label: 'درآمد',
       data: [],
       backgroundColor: '#4CAF50'
     },
     {
-      label: 'Expenses',
+      label: 'هزینه',
       data: [],
       backgroundColor: '#F44336'
     }
@@ -130,12 +130,12 @@ const updateChartData = () => {
     labels: months,
     datasets: [
       {
-        label: 'Income',
+        label: 'درآمد',
         data: incomeData,
         backgroundColor: '#4CAF50'
       },
       {
-        label: 'Expenses',
+        label: 'هزینه',
         data: expenseData,
         backgroundColor: '#F44336'
       }
@@ -152,10 +152,10 @@ const updateSummary = async () => {
   const transactions = await DataService.getTransactions()
   totalIncome.value = transactions
     .filter(t => t.type === 'income')
-    .reduce((sum, t) => sum + t.amount, 0)
+    .reduce((sum, t) => sum + t.finalAmount, 0)
   totalExpenses.value = transactions
     .filter(t => t.type === 'expense')
-    .reduce((sum, t) => sum + t.amount, 0)
+    .reduce((sum, t) => sum + t.finalAmount, 0)
   balance.value = totalIncome.value - totalExpenses.value
 }
 
@@ -219,7 +219,7 @@ watch([expensesByCategory, monthlySummary], async () => {
               <th>عنوان</th>
               <th>دسته بندی</th>
               <th>هزینه یا درآمد</th>
-              <th>مقدار (تومان)</th>
+              <th>مبلغ نهایی (تومان)</th>
             </tr>
           </thead>
           <tbody>
@@ -229,11 +229,12 @@ watch([expensesByCategory, monthlySummary], async () => {
               <td>{{ transaction.category }}</td>
               <td>
                 <span class="type-badge" :class="transaction.type">
-                  {{ transaction.type }}
+                                  {{ transaction.type === 'expense' ? 'هزینه' : 'درامد' }}
+
                 </span>
               </td>
               <td class="amount" :class="transaction.type">
-                {{ transaction.amount }}
+                {{ formatNumber(transaction.finalAmount) }}
               </td>
             </tr>
           </tbody>
@@ -406,7 +407,7 @@ watch([expensesByCategory, monthlySummary], async () => {
 .transactions-table th,
 .transactions-table td {
   padding: 1rem 0.75rem;
-  text-align: left;
+  text-align: center;
   border-bottom: 1px solid var(--border-color);
   color: var(--text-primary);
 }

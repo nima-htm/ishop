@@ -54,7 +54,9 @@ const form = ref({
   description: '',
   category: '',
   type: 'expense',
- amount: ''
+  number: '',
+  amountPerItem: '',
+  finalAmount: 0
 })
 
 const isEditing = ref(false)
@@ -71,13 +73,15 @@ const loadTransactions = async () => {
   transactions.value = await DataService.getTransactions()
 }
 
-// Refresh transactions after form submission
+// Reset form after submission
 const resetForm = async () => {
   form.value = {
     description: '',
     category: '',
     type: 'expense',
-    amount: ''
+    number: '',
+    amountPerItem: '',
+    finalAmount: 0
   }
   isEditing.value = false
   editingId.value = null
@@ -99,8 +103,12 @@ const validateForm = () => {
     errors.value.category = 'دسته بندی اجباری است'
   }
   
-  if (!form.value.amount || parseFloat(form.value.amount) <= 0) {
-    errors.value.amount = 'مقدار باید عددی بزرگتر از صفر باشد'
+  if (!form.value.number || parseFloat(form.value.number) <= 0) {
+    errors.value.number = 'تعداد باید عددی بزرگتر از صفر باشد'
+  }
+  
+  if (!form.value.amountPerItem || parseFloat(form.value.amountPerItem) <= 0) {
+    errors.value.amountPerItem = 'قیمت واحد باید عددی بزرگتر از صفر باشد'
   }
   
   return Object.keys(errors.value).length === 0
@@ -113,11 +121,16 @@ const handleSubmit = async (e) => {
     return
   }
   
+  const number = parseFloat(form.value.number)
+  const amountPerItem = parseFloat(form.value.amountPerItem)
+  
   const transaction = {
     description: form.value.description.trim(),
     category: form.value.category.trim(),
     type: form.value.type,
-    amount: parseFloat(form.value.amount)
+    number: number,
+    amountPerItem: amountPerItem,
+    finalAmount: number * amountPerItem
   }
   
   try {
@@ -141,7 +154,9 @@ const editTransaction = (transaction) => {
     description: transaction.description,
     category: transaction.category,
     type: transaction.type,
-    amount: transaction.amount.toString()
+    number: transaction.number.toString(),
+    amountPerItem: transaction.amountPerItem.toString(),
+    finalAmount: transaction.finalAmount
   }
  isEditing.value = true
   editingId.value = transaction.id
@@ -190,18 +205,38 @@ const editTransaction = (transaction) => {
       </div>
       
       <div class="form-group">
-        <label for="amount">مبلغ (تومان)</label>
+        <label for="number">تعداد</label>
         <input
           type="number"
-          id="amount"
-          v-model="form.amount"
-          :class="{ 'error': errors.amount }"
+          id="number"
+          v-model="form.number"
+          :class="{ 'error': errors.number }"
           placeholder="0"
-
         />
-        <span v-if="errors.amount" class="error-message">
-          {{ errors.amount }}
+        <span v-if="errors.number" class="error-message">
+          {{ errors.number }}
         </span>
+      </div>
+      
+      <div class="form-group">
+        <label for="amountPerItem">قیمت واحد (تومان)</label>
+        <input
+          type="number"
+          id="amountPerItem"
+          v-model="form.amountPerItem"
+          :class="{ 'error': errors.amountPerItem }"
+          placeholder="0"
+        />
+        <span v-if="errors.amountPerItem" class="error-message">
+          {{ errors.amountPerItem }}
+        </span>
+      </div>
+      
+      <div class="form-group" v-if="form.number && form.amountPerItem">
+        <label>مقدار نهایی (تومان)</label>
+        <div class="final-amount-display">
+          {{ formatNumber(parseFloat(form.number) * parseFloat(form.amountPerItem)) }}
+        </div>
       </div>
       
       <div class="form-actions">
@@ -233,10 +268,19 @@ const editTransaction = (transaction) => {
           </div>
           <div class="transaction-details">
             <span class="type" :class="transaction.type">
-              {{ transaction.type }}
+                {{ transaction.type === 'expense' ? 'هزینه' : 'درامد' }}
+
+            </span>
+            <span class="detail-item">
+              <span class="detail-label">تعداد:</span>
+              <span class="detail-value">{{ transaction.number }}</span>
+            </span>
+            <span class="detail-item">
+              <span class="detail-label">واحد:</span>
+              <span class="detail-value">{{ formatNumber(transaction.amountPerItem) }}</span>
             </span>
             <span class="amount" :class="transaction.type">
-              {{ formatNumber(transaction.amount)}}
+              {{ formatNumber(transaction.finalAmount)}}
             </span>
             <button 
               @click="editTransaction(transaction)"
@@ -392,6 +436,17 @@ input, select{
   background: var(--text-primary);
 }
 
+.final-amount-display {
+  background: var(--accent-light);
+  border: 2px solid var(--accent);
+  border-radius: 8px;
+  padding: 0.75rem;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--accent);
+  text-align: center;
+}
+
 .existing-transactions {
   background: var(--bg-secondary);
   padding: 1.5rem;
@@ -466,6 +521,23 @@ input, select{
 .type.expense {
   background: rgba(239, 68, 68, 0.2);
   color: var(--danger);
+}
+
+.detail-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.9rem;
+}
+
+.detail-label {
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.detail-value {
+  color: var(--text-primary);
+  font-weight: 500;
 }
 
 .amount {

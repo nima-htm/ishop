@@ -62,7 +62,9 @@ const formatDate = (dateString) => {
             <th class="th-section">عنوان</th>
             <th>دسته بندی</th>
             <th>نوع هزینه</th>
-            <th>(تومان) مقدار </th>
+            <th>تعداد</th>
+            <th>قیمت واحد (تومان)</th>
+            <th>مقدار نهایی (تومان)</th>
             <th>عملیات</th>
           </tr>
         </thead>
@@ -73,11 +75,15 @@ const formatDate = (dateString) => {
             <td>{{ transaction.category }}</td>
             <td>
               <span class="type-badge" :class="transaction.type">
-                {{ transaction.type }}
+                {{ transaction.type === 'expense' ? 'هزینه' : 'درامد' }}
               </span>
             </td>
+            <td class="number-cell">{{ transaction.number }}</td>
+            <td class="amount-cell" :class="transaction.type">
+              {{ formatNumber(transaction.amountPerItem) }}
+            </td>
             <td class="amount" :class="transaction.type">
-              {{ formatNumber(transaction.amount) }}
+              {{ formatNumber(transaction.finalAmount) }}
             </td>
             <td>
               <button 
@@ -195,6 +201,24 @@ const formatDate = (dateString) => {
 
 .type-badge.expense {
   background: rgba(239, 68, 68, 0.2);
+  color: var(--danger);
+}
+
+.number-cell {
+  font-weight: 600;
+  text-align: center;
+}
+
+.amount-cell {
+  font-weight: 600;
+  text-align: center;
+}
+
+.amount-cell.income {
+  color: var(--success);
+}
+
+.amount-cell.expense {
   color: var(--danger);
 }
 
