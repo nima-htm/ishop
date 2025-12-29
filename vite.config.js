@@ -11,20 +11,20 @@ export default defineConfig({
       manifest: {
         name: 'ishop',
         short_name: 'ishop',
-        start_url: '.',
+        start_url: '/',
         display: 'standalone',
         background_color: '#ffffff',
         theme_color: '#B93B7A',
         icons: [
           {
-            src: 'icon-192x192.svg',
+            src: 'icons/192.png',
             sizes: '192x192',
-            type: 'image/svg'
+            type: 'image/png'
           },
           {
-            src: 'icon-512x512.svg',
+            src: 'icons/512.png',
             sizes: '512x512',
-            type: 'image/svg'
+            type: 'image/png'
           }
         ]
       },
