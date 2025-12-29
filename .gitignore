@@ -22,3 +22,40 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Capacitor files
+/android/
+/ios/
+/www/
+capacitor-plugin.json
+
+# Native build artifacts
+*.gradle
+*.gradle.kts
+build/
+gradle/
+.gradle/
+
+# iOS
+Pods/
+*.xcworkspace/
+*.xcodeproj/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# OS
+Thumbs.db
+.DS_Store
+*.swp
+*.swo
+
+# IDE
+.vscode/
+!.vscode/extensions.json
+.idea/
+*.iml
+*.sublime-project
+*.sublime-workspace
