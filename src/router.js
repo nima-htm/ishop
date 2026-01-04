@@ -1,7 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import DashboardView from './views/DashboardView.vue'
-import TransactionsView from './views/TransactionsView.vue'
-import AddTransactionView from './views/AddTransactionView.vue'
+import ProductGroupView from './views/ProductGroupView.vue'
+import ProductView from './views/ProductView.vue'
 import SettingsView from './views/SettingsView.vue'
 
 const routes = [
@@ -15,15 +15,15 @@ const routes = [
     component: DashboardView
   },
   {
-    path: '/transactions',
-    name: 'transactions',
-    component: TransactionsView
+    path: '/product-groups',
+    name: 'product-groups',
+    component: ProductGroupView
   },
   {
-    path: '/add-transaction',
-    name: 'add-transaction',
-    component: AddTransactionView
-  },
+    path: '/products',
+    name: 'products',
+    component: ProductView
+ },
   {
     path: '/settings',
     name: 'settings',

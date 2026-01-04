@@ -4,58 +4,76 @@ import { Chart as ChartJS, ArcElement, Tooltip, Legend, BarElement, CategoryScal
 import { Pie, Bar } from 'vue-chartjs'
 import DatabaseService from '../services/DatabaseService'
 import { formatNumber } from 'chart.js/helpers'
-import { formatDate as formatDateUtil } from '../utils/dateFormatter'
 
 ChartJS.register(ArcElement, Tooltip, Legend, BarElement, CategoryScale, LinearScale)
 
 // Data service using IndexedDB
 const DataService = {
-  async getTransactions() {
+  async getProducts() {
     try {
-      return await DatabaseService.getTransactions()
+      return await DatabaseService.getProducts()
     } catch (error) {
-      console.error('Error getting transactions:', error)
+      console.error('Error getting products:', error)
       return []
     }
- },
-  
-  async getExpensesByCategory() {
-    const transactions = await this.getTransactions()
-    const categories = {}
-    
-    transactions.forEach(transaction => {
-      if (transaction.type === 'expense') {
-        categories[transaction.category] = (categories[transaction.category] || 0) + transaction.finalAmount
-      }
-    })
-    
-    return categories
   },
   
-  async getMonthlySummary() {
-    const transactions = await this.getTransactions()
-    const monthlyData = {}
+  async getProductGroups() {
+    try {
+      return await DatabaseService.getProductGroups()
+    } catch (error) {
+      console.error('Error getting product groups:', error)
+      return []
+    }
+  },
+  
+  async getProductsByGroup() {
+    const products = await this.getProducts()
+    const groups = await this.getProductGroups()
+    const groupMap = {}
     
-    transactions.forEach(transaction => {
-      const month = new Date(transaction.date).toLocaleString('default', { month: 'short', year: 'numeric' })
-      if (!monthlyData[month]) {
-        monthlyData[month] = { income: 0, expenses: 0 }
-      }
-      
-      if (transaction.type === 'income') {
-        monthlyData[month].income += transaction.finalAmount
+    // Create a map of group codes to group names
+    const groupCodeMap = {}
+    groups.forEach(group => {
+      groupCodeMap[group.product_group_code] = group.group_name
+    })
+    
+    // Count products by group
+    products.forEach(product => {
+      const groupName = groupCodeMap[product.product_group_code] || product.product_group_code
+      groupMap[groupName] = (groupMap[groupName] || 0) + 1
+    })
+    
+    return groupMap
+  },
+  
+  async getProductSummary() {
+    const products = await this.getProducts()
+    const summary = {
+      totalProducts: products.length,
+      totalQuantity: 0,
+      totalValue: 0,
+      entranceProducts: 0,
+      departureProducts: 0
+    }
+    
+    products.forEach(product => {
+      summary.totalQuantity += product.quantity || 0
+      summary.totalValue += (product.quantity || 0) * (product.cost_per_product || 0)
+      if (product.is_entrance) {
+        summary.entranceProducts += 1
       } else {
-        monthlyData[month].expenses += transaction.finalAmount
+        summary.departureProducts += 1
       }
     })
     
-    return monthlyData
+    return summary
   }
 }
 
-const expensesByCategory = ref({})
-const monthlySummary = ref({})
-const recentTransactions = ref([])
+const productsByGroup = ref({})
+const productSummary = ref({})
+const products = ref([])
 
 onMounted(async () => {
   await DatabaseService.init()
@@ -63,16 +81,11 @@ onMounted(async () => {
 })
 
 const updateData = async () => {
-  expensesByCategory.value = await DataService.getExpensesByCategory()
-  monthlySummary.value = await DataService.getMonthlySummary()
-  const allTransactions = await DataService.getTransactions()
-  // Format dates when loading
-  recentTransactions.value = await Promise.all(
-    allTransactions.slice(-5).reverse().map(async (transaction) => ({
-      ...transaction,
-      formattedDate: await formatDateUtil(transaction.date, 'YYYY-MM-DD')
-    }))
-  )
+  productsByGroup.value = await DataService.getProductsByGroup()
+  productSummary.value = await DataService.getProductSummary()
+  const allProducts = await DataService.getProducts()
+ // Sort by date added (newest first)
+  products.value = allProducts.slice(-5).reverse()
 }
 
 // Chart data
@@ -92,31 +105,26 @@ const pieChartData = ref({
 })
 
 const barChartData = ref({
- labels: [],
+  labels: [],
   datasets: [
     {
-      label: 'درآمد',
+      label: 'تعداد کالاها',
       data: [],
-      backgroundColor: '#4CAF50'
-    },
-    {
-      label: 'هزینه',
-      data: [],
-      backgroundColor: '#F44336'
+      backgroundColor: '#6366f1'
     }
   ]
 })
 
 // Update chart data when data changes
 const updateChartData = () => {
- // Pie chart data
-  const categories = Object.keys(expensesByCategory.value)
-  const amounts = Object.values(expensesByCategory.value)
+  // Pie chart data (products by group)
+  const groups = Object.keys(productsByGroup.value)
+  const counts = Object.values(productsByGroup.value)
   
   pieChartData.value = {
-    labels: categories,
+    labels: groups,
     datasets: [{
-      data: amounts,
+      data: counts,
       backgroundColor: [
         '#FF6384',
         '#36A2EB',
@@ -128,71 +136,65 @@ const updateChartData = () => {
     }]
   }
 
-  // Bar chart data
-  const months = Object.keys(monthlySummary.value)
-  const incomeData = months.map(month => monthlySummary.value[month].income)
-  const expenseData = months.map(month => monthlySummary.value[month].expenses)
+  // Bar chart data (summary statistics)
+  const labels = ['کالاهای ورودی', 'کالاهای خروجی', 'کل کالاها']
+  const data = [
+    productSummary.value.entranceProducts,
+    productSummary.value.departureProducts,
+    productSummary.value.totalProducts
+  ]
   
   barChartData.value = {
-    labels: months,
+    labels: labels,
     datasets: [
       {
-        label: 'درآمد',
-        data: incomeData,
-        backgroundColor: '#4CAF50'
-      },
-      {
-        label: 'هزینه',
-        data: expenseData,
-        backgroundColor: '#F44336'
+        label: 'تعداد',
+        data: data,
+        backgroundColor: ['#10b981', '#ef4444', '#6366f1']
       }
     ]
- }
+  }
 }
 
 // Summary data
-const totalIncome = ref(0)
-const totalExpenses = ref(0)
-const balance = ref(0)
+const totalProducts = ref(0)
+const totalQuantity = ref(0)
+const totalValue = ref(0)
 
 const updateSummary = async () => {
-  const transactions = await DataService.getTransactions()
-  totalIncome.value = transactions
-    .filter(t => t.type === 'income')
-    .reduce((sum, t) => sum + t.finalAmount, 0)
-  totalExpenses.value = transactions
-    .filter(t => t.type === 'expense')
-    .reduce((sum, t) => sum + t.finalAmount, 0)
-  balance.value = totalIncome.value - totalExpenses.value
+  const summary = await DataService.getProductSummary()
+  totalProducts.value = summary.totalProducts
+  totalQuantity.value = summary.totalQuantity
+  totalValue.value = summary.totalValue
 }
 
 // Update summary and chart when data changes
-watch([expensesByCategory, monthlySummary], async () => {
+watch([productsByGroup, productSummary], async () => {
   await updateSummary()
   updateChartData()
 }, { deep: true })
 </script>
 
 <template>
-  <div class="dashboard">
+ <div class="dashboard">
     <div class="summary-cards">
-      <div class="card">
-        <h3>مجموع درآمد</h3>
-        <p class="amount income">{{ formatNumber(totalIncome) }} تومان</p>
+      <div class="card income">
+        <h3>تعداد کالاها</h3>
+        <p class="amount">{{ formatNumber(totalProducts) }}</p>
       </div>
-      <div class="card">
-        <h3>مجموع هزینه ها</h3>
-        <p class="amount expense">{{ formatNumber(totalExpenses) }} تومان</p>
+      <div class="card expense">
+        <h3>تعداد کل</h3>
+        <p class="amount">{{ formatNumber(totalQuantity) }}</p>
       </div>
-      <div class="card">
-        <h3>موجودی فعلی</h3>
-        <p class="amount" :class="balance >= 0 ? 'income' : 'expense'">{{formatNumber(balance) }} تومان</p>
+      <div class="card balance">
+        <h3>ارزش کل (تومان)</h3>
+        <p class="amount">{{ formatNumber(totalValue) }}</p>
       </div>
     </div>
 
     <div class="charts">
       <div class="chart-container">
-        <h3>هزینه ها بر اساس دسته بندی</h3>
+        <h3>تعداد کالاها بر اساس گروه</h3>
         <div class="chart-content">
           <Pie 
             :data="pieChartData" 
@@ -204,7 +206,7 @@ watch([expensesByCategory, monthlySummary], async () => {
       </div>
 
       <div class="chart-container">
-        <h3>گزارش ماهانه</h3>
+        <h3>خلاصه کالاها</h3>
         <div class="chart-content">
           <Bar 
             :data="barChartData" 
@@ -216,37 +218,38 @@ watch([expensesByCategory, monthlySummary], async () => {
       </div>
     </div>
 
-    <div class="recent-transactions">
-      <h3>تراکنش های اخیر</h3>
+    <div class="recent-products">
+      <h3>کالاهای اخیر</h3>
       <div class="table-container">
-        <table class="transactions-table">
+        <table class="products-table">
           <thead>
             <tr>
-              <th>تاریخ</th>
-              <th>عنوان</th>
-              <th>دسته بندی</th>
-              <th>هزینه یا درآمد</th>
-              <th>مبلغ نهایی (تومان)</th>
+              <th>کد کالا</th>
+              <th>نام کالا</th>
+              <th>گروه</th>
+              <th>نوع</th>
+              <th>تعداد</th>
+              <th>قیمت واحد</th>
+              <th>مبلغ کل</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="transaction in recentTransactions" :key="transaction.id">
-              <td>{{transaction.formattedDate }}</td>
-              <td>{{ transaction.description }}</td>
-              <td>{{ transaction.category }}</td>
+            <tr v-for="product in products" :key="product.id">
+              <td>{{ product.product_code }}</td>
+              <td>{{ product.name }}</td>
+              <td>{{ product.product_group_code }}</td>
               <td>
-                <span class="type-badge" :class="transaction.type">
-                                  {{ transaction.type === 'expense' ? 'هزینه' : 'درامد' }}
-
+                <span class="type-badge" :class="product.is_entrance ? 'entrance' : 'departure'">
+                  {{ product.is_entrance ? 'ورودی' : 'خروجی' }}
                 </span>
               </td>
-              <td class="amount" :class="transaction.type">
-                {{ formatNumber(transaction.finalAmount) }}
-              </td>
+              <td class="number-cell">{{ product.quantity }}</td>
+              <td class="amount-cell">{{ formatNumber(product.cost_per_product) }}</td>
+              <td class="amount">{{ formatNumber(product.total_cost) }}</td>
             </tr>
           </tbody>
         </table>
-        <div v-if="recentTransactions.length === 0" class="no-data">
+        <div v-if="products.length === 0" class="no-data">
           داده ای یافت نشد
         </div>
       </div>
@@ -387,15 +390,15 @@ watch([expensesByCategory, monthlySummary], async () => {
   font-style: italic;
 }
 
-.recent-transactions {
+.recent-products {
   background: var(--bg-secondary);
   padding: 1.5rem;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+ border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0.1);
   border: 1px solid var(--border-color);
 }
 
-.recent-transactions h3 {
+.recent-products h3 {
   margin: 0 0 1.5rem 0;
   color: var(--text-primary);
   font-size: 1.2rem;
@@ -406,26 +409,26 @@ watch([expensesByCategory, monthlySummary], async () => {
   overflow-y: auto;
 }
 
-.transactions-table {
+.products-table {
   width: 100%;
   border-collapse: collapse;
 }
 
-.transactions-table th,
-.transactions-table td {
+.products-table th,
+.products-table td {
   padding: 1rem 0.75rem;
   text-align: center;
   border-bottom: 1px solid var(--border-color);
   color: var(--text-primary);
 }
 
-.transactions-table th {
+.products-table th {
   background: var(--accent-light);
   font-weight: 700;
   color: var(--accent);
 }
 
-.transactions-table tbody tr:hover {
+.products-table tbody tr:hover {
   background: var(--bg-primary);
 }
 
@@ -460,7 +463,7 @@ watch([expensesByCategory, monthlySummary], async () => {
 
 /* Responsive design */
 @media (max-width: 768px) {
-  .dashboard {
+ .dashboard {
     padding: 1rem;
   }
 
@@ -473,7 +476,7 @@ watch([expensesByCategory, monthlySummary], async () => {
     padding: 1.25rem;
   }
 
-  .card h3 {
+ .card h3 {
     font-size: 0.85rem;
     margin-bottom: 0.5rem;
   }
@@ -500,12 +503,12 @@ watch([expensesByCategory, monthlySummary], async () => {
     height: 250px;
   }
 
-  .transactions-table {
+  .products-table {
     font-size: 0.9rem;
  }
 
-  .transactions-table th,
-  .transactions-table td {
+  .products-table th,
+  .products-table td {
     padding: 0.75rem 0.5rem;
   }
 }
@@ -513,11 +516,11 @@ watch([expensesByCategory, monthlySummary], async () => {
 @media (max-width: 480px) {
   .dashboard {
     padding: 0.75rem;
-  }
+ }
 
   .dashboard h2 {
     font-size: 1.3rem;
-  }
+ }
 
   .summary-cards {
     grid-template-columns: 1fr;
@@ -543,18 +546,18 @@ watch([expensesByCategory, monthlySummary], async () => {
   .chart-container h3 {
     font-size: 1rem;
     margin-bottom: 0.5rem;
-  }
+ }
 
   .chart-content {
     height: 200px;
   }
 
-  .transactions-table {
+  .products-table {
     font-size: 0.8rem;
   }
 
-  .transactions-table th,
-  .transactions-table td {
+  .products-table th,
+  .products-table td {
     padding: 0.5rem 0.35rem;
   }
 

@@ -40,20 +40,20 @@ const isDarkMode = computed(() => {
         داشبورد
       </RouterLink>
       <RouterLink 
-        to="/transactions" 
+        to="/product-groups" 
         class="tab-link"
-        :class="{ 'active': activeTab === 'transactions' }"
-        @click="activeTab = 'transactions'"
+        :class="{ 'active': activeTab === 'product-groups' }"
+        @click="activeTab = 'product-groups'"
       >
-        تراکنش ها
+        نوع کالا
       </RouterLink>
       <RouterLink 
-        to="/add-transaction" 
+        to="/products" 
         class="tab-link"
-        :class="{ 'active': activeTab === 'add-transaction' }"
-        @click="activeTab = 'add-transaction'"
+        :class="{ 'active': activeTab === 'products' }"
+        @click="activeTab = 'products'"
       >
-        افزودن تراکنش
+        کالاها
       </RouterLink>
       <RouterLink 
         to="/settings" 

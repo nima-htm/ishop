@@ -1,6 +1,6 @@
 class DatabaseService {
   constructor() {
-    this.dbName = 'FinancialManagerDB';
+    this.dbName = 'iShopDB';
     this.version = 1;
     this.db = null;
   }
@@ -22,16 +22,26 @@ class DatabaseService {
       request.onupgradeneeded = (event) => {
         const db = event.target.result;
         
-        // Create transactions store
-        if (!db.objectStoreNames.contains('transactions')) {
-          const transactionStore = db.createObjectStore('transactions', { 
+        // Create product groups store
+        if (!db.objectStoreNames.contains('productGroups')) {
+          const productGroupStore = db.createObjectStore('productGroups', { 
             keyPath: 'id', 
             autoIncrement: true 
           });
-          transactionStore.createIndex('date', 'date', { unique: false });
-          transactionStore.createIndex('type', 'type', { unique: false });
-          transactionStore.createIndex('category', 'category', { unique: false });
-          transactionStore.createIndex('amount', 'amount', { unique: false });
+          productGroupStore.createIndex('product_group_code', 'product_group_code', { unique: true });
+          productGroupStore.createIndex('group_name', 'group_name', { unique: false });
+        }
+
+        // Create products store
+        if (!db.objectStoreNames.contains('products')) {
+          const productStore = db.createObjectStore('products', { 
+            keyPath: 'id', 
+            autoIncrement: true 
+          });
+          productStore.createIndex('product_code', 'product_code', { unique: true });
+          productStore.createIndex('name', 'name', { unique: false });
+          productStore.createIndex('product_group_code', 'product_group_code', { unique: false });
+          productStore.createIndex('date_added', 'date_added', { unique: false });
         }
 
         // Create settings store
@@ -44,31 +54,33 @@ class DatabaseService {
     });
   }
 
-  async addTransaction(transaction) {
+  // Product Group Methods
+  async addProductGroup(group) {
     if (!this.db) await this.init();
     
-    const transactionObj = {
-      ...transaction,
+    const groupObj = {
+      ...group,
       id: Date.now(), // Use timestamp as ID
-      date: transaction.date || new Date().toISOString()
+      product_group_code: `PG${(Date.now() % 100000).toString().padStart(5, '0')}`, // Auto-generate product group code (max 5 digits)
+      date_added: group.date_added || new Date().toISOString()
     };
 
-    const transactionStore = this.db.transaction(['transactions'], 'readwrite');
-    const store = transactionStore.objectStore('transactions');
+    const transaction = this.db.transaction(['productGroups'], 'readwrite');
+    const store = transaction.objectStore('productGroups');
     
     return new Promise((resolve, reject) => {
-      const request = store.add(transactionObj);
+      const request = store.add(groupObj);
       
       request.onsuccess = () => resolve(request.result);
       request.onerror = () => reject(request.error);
     });
   }
 
- async getTransactions() {
+ async getProductGroups() {
     if (!this.db) await this.init();
     
-    const transactionStore = this.db.transaction(['transactions'], 'readonly');
-    const store = transactionStore.objectStore('transactions');
+    const transaction = this.db.transaction(['productGroups'], 'readonly');
+    const store = transaction.objectStore('productGroups');
     
     return new Promise((resolve, reject) => {
       const request = store.getAll();
@@ -76,34 +88,34 @@ class DatabaseService {
       request.onsuccess = () => resolve(request.result);
       request.onerror = () => reject(request.error);
     });
- }
+  }
 
-  async updateTransaction(id, updatedTransaction) {
+ async updateProductGroup(id, updatedGroup) {
     if (!this.db) await this.init();
     
-    const transactionStore = this.db.transaction(['transactions'], 'readwrite');
-    const store = transactionStore.objectStore('transactions');
+    const transaction = this.db.transaction(['productGroups'], 'readwrite');
+    const store = transaction.objectStore('productGroups');
     
-    const existingTransaction = await this.getTransaction(id);
-    const transactionObj = {
-      ...existingTransaction,
-      ...updatedTransaction,
+    const existingGroup = await this.getProductGroup(id);
+    const groupObj = {
+      ...existingGroup,
+      ...updatedGroup,
       id: id
     };
 
     return new Promise((resolve, reject) => {
-      const request = store.put(transactionObj);
+      const request = store.put(groupObj);
       
       request.onsuccess = () => resolve(request.result);
       request.onerror = () => reject(request.error);
     });
   }
 
-  async getTransaction(id) {
+  async getProductGroup(id) {
     if (!this.db) await this.init();
     
-    const transactionStore = this.db.transaction(['transactions'], 'readonly');
-    const store = transactionStore.objectStore('transactions');
+    const transaction = this.db.transaction(['productGroups'], 'readonly');
+    const store = transaction.objectStore('productGroups');
     
     return new Promise((resolve, reject) => {
       const request = store.get(id);
@@ -111,13 +123,13 @@ class DatabaseService {
       request.onsuccess = () => resolve(request.result);
       request.onerror = () => reject(request.error);
     });
- }
+  }
 
-  async deleteTransaction(id) {
+  async deleteProductGroup(id) {
     if (!this.db) await this.init();
     
-    const transactionStore = this.db.transaction(['transactions'], 'readwrite');
-    const store = transactionStore.objectStore('transactions');
+    const transaction = this.db.transaction(['productGroups'], 'readwrite');
+    const store = transaction.objectStore('productGroups');
     
     return new Promise((resolve, reject) => {
       const request = store.delete(id);
@@ -127,20 +139,87 @@ class DatabaseService {
     });
   }
 
-  async clearTransactions() {
+ // Product Methods
+ async addProduct(product) {
     if (!this.db) await this.init();
     
-    const transactionStore = this.db.transaction(['transactions'], 'readwrite');
-    const store = transactionStore.objectStore('transactions');
+    const productObj = {
+      ...product,
+      id: Date.now(), // Use timestamp as ID
+      product_code: `P${(Date.now() % 100000).toString().padStart(5, '0')}`, // Auto-generate product code
+      date_added: product.date_added || new Date().toISOString()
+    };
+
+    const transaction = this.db.transaction(['products'], 'readwrite');
+    const store = transaction.objectStore('products');
     
     return new Promise((resolve, reject) => {
-      const request = store.clear();
+      const request = store.add(productObj);
       
       request.onsuccess = () => resolve(request.result);
       request.onerror = () => reject(request.error);
     });
   }
 
+ async getProducts() {
+    if (!this.db) await this.init();
+    
+    const transaction = this.db.transaction(['products'], 'readonly');
+    const store = transaction.objectStore('products');
+    
+    return new Promise((resolve, reject) => {
+      const request = store.getAll();
+      
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+async updateProduct(id, productObj) {
+  if (!this.db) await this.init();
+
+  const transaction = this.db.transaction(['products'], 'readwrite');
+  const store = transaction.objectStore('products');
+
+  return new Promise((resolve, reject) => {
+    const request = store.put({
+      ...productObj,
+      id: Number(id)
+    });
+
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+}
+ async getProduct(id) {
+    if (!this.db) await this.init();
+    
+    const transaction = this.db.transaction(['products'], 'readonly');
+    const store = transaction.objectStore('products');
+    
+    return new Promise((resolve, reject) => {
+      const request = store.get(id);
+      
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  async deleteProduct(id) {
+    if (!this.db) await this.init();
+    
+    const transaction = this.db.transaction(['products'], 'readwrite');
+    const store = transaction.objectStore('products');
+    
+    return new Promise((resolve, reject) => {
+      const request = store.delete(id);
+      
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+ // Settings Methods (preserved)
   async setSetting(key, value) {
     if (!this.db) await this.init();
     
@@ -157,7 +236,7 @@ class DatabaseService {
     });
   }
 
- async getSetting(key) {
+  async getSetting(key) {
     if (!this.db) await this.init();
     
     const settingsStore = this.db.transaction(['settings'], 'readonly');
@@ -174,7 +253,7 @@ class DatabaseService {
     });
   }
 
-  async getAllSettings() {
+ async getAllSettings() {
     if (!this.db) await this.init();
     
     const settingsStore = this.db.transaction(['settings'], 'readonly');
@@ -191,23 +270,35 @@ class DatabaseService {
   async exportData() {
     if (!this.db) await this.init();
     
-    // Use a single transaction for both stores
-    const transaction = this.db.transaction(['transactions', 'settings'], 'readonly');
+    // Use a single transaction for all stores
+    const transaction = this.db.transaction(['products', 'productGroups', 'settings'], 'readonly');
     
     return new Promise((resolve, reject) => {
       const exportData = {};
       let completedStores = 0;
+      const totalStores = 3;
       
-      // Get all transactions
-      const transactionRequest = transaction.objectStore('transactions').getAll();
-      transactionRequest.onsuccess = () => {
-        exportData.transactions = transactionRequest.result;
+      // Get all products
+      const productRequest = transaction.objectStore('products').getAll();
+      productRequest.onsuccess = () => {
+        exportData.products = productRequest.result;
         completedStores++;
-        if (completedStores === 2) {
+        if (completedStores === totalStores) {
           resolve(exportData);
         }
       };
-      transactionRequest.onerror = () => reject(transactionRequest.error);
+      productRequest.onerror = () => reject(productRequest.error);
+      
+      // Get all product groups
+      const groupRequest = transaction.objectStore('productGroups').getAll();
+      groupRequest.onsuccess = () => {
+        exportData.productGroups = groupRequest.result;
+        completedStores++;
+        if (completedStores === totalStores) {
+          resolve(exportData);
+        }
+      };
+      groupRequest.onerror = () => reject(groupRequest.error);
       
       // Get all settings
       const settingsRequest = transaction.objectStore('settings').getAll();
@@ -216,39 +307,39 @@ class DatabaseService {
         exportData.exportDate = new Date().toISOString();
         exportData.version = '1.0';
         completedStores++;
-        if (completedStores === 2) {
+        if (completedStores === totalStores) {
           resolve(exportData);
         }
       };
       settingsRequest.onerror = () => reject(settingsRequest.error);
     });
-  }
+ }
 
   async importData(importData) {
     if (!this.db) await this.init();
     
     // Validate import data structure
-    if (!importData.transactions || !importData.settings) {
+    if (!importData.products || !importData.productGroups || !importData.settings) {
       throw new Error('Invalid import data structure');
     }
 
     // Clear existing data using a single transaction
-    const transaction = this.db.transaction(['transactions', 'settings'], 'readwrite');
+    const transaction = this.db.transaction(['products', 'productGroups', 'settings'], 'readwrite');
     
     return new Promise((resolve, reject) => {
       let completedOperations = 0;
-      const totalOperations = 2; // transactions and settings
+      const totalOperations = 3; // products, productGroups and settings
       
-      // Clear and import transactions
-      const transactionStore = transaction.objectStore('transactions');
-      const clearTransactionsRequest = transactionStore.clear();
+      // Clear and import products
+      const productStore = transaction.objectStore('products');
+      const clearProductsRequest = productStore.clear();
       
-      clearTransactionsRequest.onsuccess = async () => {
+      clearProductsRequest.onsuccess = async () => {
         try {
-          // Import transactions using put to preserve existing IDs
-          for (const transactionData of importData.transactions) {
+          // Import products using put to preserve existing IDs
+          for (const productData of importData.products) {
             await new Promise((res, rej) => {
-              const request = transactionStore.put(transactionData);
+              const request = productStore.put(productData);
               request.onsuccess = () => res(request.result);
               request.onerror = () => rej(request.error);
             });
@@ -261,7 +352,31 @@ class DatabaseService {
           reject(error);
         }
       };
-      clearTransactionsRequest.onerror = () => reject(clearTransactionsRequest.error);
+      clearProductsRequest.onerror = () => reject(clearProductsRequest.error);
+      
+      // Clear and import product groups
+      const groupStore = transaction.objectStore('productGroups');
+      const clearGroupsRequest = groupStore.clear();
+      
+      clearGroupsRequest.onsuccess = async () => {
+        try {
+          // Import product groups
+          for (const group of importData.productGroups) {
+            await new Promise((res, rej) => {
+              const request = groupStore.put(group);
+              request.onsuccess = () => res(request.result);
+              request.onerror = () => rej(request.error);
+            });
+          }
+          completedOperations++;
+          if (completedOperations === totalOperations) {
+            resolve('Data imported successfully');
+          }
+        } catch (error) {
+          reject(error);
+        }
+      };
+      clearGroupsRequest.onerror = () => reject(clearGroupsRequest.error);
       
       // Clear and import settings
       const settingsStore = transaction.objectStore('settings');
@@ -287,35 +402,47 @@ class DatabaseService {
       };
       clearSettingsRequest.onerror = () => reject(clearSettingsRequest.error);
     });
- }
+  }
 
   async getDatabaseStats() {
     if (!this.db) await this.init();
     
-    // Use a single transaction for both stores
-    const transaction = this.db.transaction(['transactions', 'settings'], 'readonly');
+    // Use a single transaction for all stores
+    const transaction = this.db.transaction(['products', 'productGroups', 'settings'], 'readonly');
     
     return new Promise((resolve, reject) => {
       const stats = {};
       let completedCounts = 0;
+      const totalStores = 3;
       
-      // Count transactions
-      const transactionCount = transaction.objectStore('transactions').count();
-      transactionCount.onsuccess = () => {
-        stats.transactionCount = transactionCount.result;
+      // Count products
+      const productCount = transaction.objectStore('products').count();
+      productCount.onsuccess = () => {
+        stats.productCount = productCount.result;
         completedCounts++;
-        if (completedCounts === 2) {
+        if (completedCounts === totalStores) {
           resolve(stats);
         }
       };
-      transactionCount.onerror = () => reject(transactionCount.error);
+      productCount.onerror = () => reject(productCount.error);
+      
+      // Count product groups
+      const groupCount = transaction.objectStore('productGroups').count();
+      groupCount.onsuccess = () => {
+        stats.productGroupCount = groupCount.result;
+        completedCounts++;
+        if (completedCounts === totalStores) {
+          resolve(stats);
+        }
+      };
+      groupCount.onerror = () => reject(groupCount.error);
       
       // Count settings
       const settingsCount = transaction.objectStore('settings').count();
       settingsCount.onsuccess = () => {
         stats.settingsCount = settingsCount.result;
         completedCounts++;
-        if (completedCounts === 2) {
+        if (completedCounts === totalStores) {
           resolve(stats);
         }
       };
