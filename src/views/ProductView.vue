@@ -143,7 +143,7 @@ const validateForm = () => {
     errors.value.product_group_code = "نوع کالا اجباری است";
   }
 
-  if (!form.value.quantity || parseFloat(form.value.quantity) <= 0) {
+  if (!form.value.quantity || parseFloat(form.value.quantity) < 0) {
     errors.value.quantity = "تعداد باید عددی بزرگتر از صفر باشد";
   }
 
@@ -281,20 +281,6 @@ const filteredProducts = computed(() => {
       <div v-if="isFormMinimized" class="product-form">
         <div class="form-grid">
           <div class="form-group">
-            <input
-              type="text"
-              id="name"
-              v-model="form.name"
-              :class="{ error: errors.name }"
-              placeholder="شرح کالا را وارد کنید"
-            />
-            <span v-if="errors.name" class="error-message">
-              {{ errors.name }}
-            </span>
-          </div>
-        </div>
-        <div class="form-grid">
-          <div class="form-group">
             <select
               id="product_group_code"
               v-model="form.product_group_code"
@@ -311,6 +297,21 @@ const filteredProducts = computed(() => {
             </select>
             <span v-if="errors.product_group_code" class="error-message">
               {{ errors.product_group_code }}
+            </span>
+          </div>
+        </div>
+
+        <div class="form-grid">
+          <div class="form-group">
+            <input
+              type="text"
+              id="name"
+              v-model="form.name"
+              :class="{ error: errors.name }"
+              placeholder="شرح کالا را وارد کنید"
+            />
+            <span v-if="errors.name" class="error-message">
+              {{ errors.name }}
             </span>
           </div>
         </div>

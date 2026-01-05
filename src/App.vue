@@ -1,22 +1,22 @@
 <script setup>
-import { ref, onMounted, computed } from 'vue'
-import { RouterLink, RouterView } from 'vue-router'
-import './style.css'
-import ThemeService from './services/ThemeService'
+import { ref, onMounted, computed } from "vue";
+import { RouterLink, RouterView } from "vue-router";
+import "./style.css";
+import ThemeService from "./services/ThemeService";
 
-const activeTab = ref('dashboard')
+const activeTab = ref("dashboard");
 
 onMounted(() => {
-  ThemeService.initializeTheme()
-})
+  ThemeService.initializeTheme();
+});
 
 const toggleDarkMode = () => {
-  ThemeService.toggleTheme()
-}
+  ThemeService.toggleTheme();
+};
 
 const isDarkMode = computed(() => {
-  return ThemeService.isDarkTheme()
-})
+  return ThemeService.isDarkTheme();
+});
 </script>
 
 <template>
@@ -24,49 +24,56 @@ const isDarkMode = computed(() => {
     <header class="app-header">
       <div class="header-content">
         <h1>فروشگاه من</h1>
-        <button class="theme-toggle" @click="toggleDarkMode" :title="isDarkMode ? 'Light Mode' : 'Dark Mode'">
-          {{ isDarkMode ? '☀️' : '🌙' }}
+        <button
+          class="theme-toggle"
+          @click="toggleDarkMode"
+          :title="isDarkMode ? 'Light Mode' : 'Dark Mode'"
+        >
+          {{ isDarkMode ? "☀️" : "🌙" }}
         </button>
       </div>
     </header>
 
     <nav class="tab-navigation">
-      <RouterLink 
-        to="/dashboard" 
+      <RouterLink
+        to="/dashboard"
         class="tab-link"
-        :class="{ 'active': activeTab === 'dashboard' }"
+        :class="{ active: activeTab === 'dashboard' }"
         @click="activeTab = 'dashboard'"
       >
         داشبورد
       </RouterLink>
-      <RouterLink 
-        to="/product-groups" 
+
+      <RouterLink
+        to="/products"
         class="tab-link"
-        :class="{ 'active': activeTab === 'product-groups' }"
-        @click="activeTab = 'product-groups'"
-      >
-        نوع کالا
-      </RouterLink>
-      <RouterLink 
-        to="/products" 
-        class="tab-link"
-        :class="{ 'active': activeTab === 'products' }"
+        :class="{ active: activeTab === 'products' }"
         @click="activeTab = 'products'"
       >
         انبار کالا
       </RouterLink>
-      <RouterLink 
-        to="/entrance" 
+      <RouterLink
+        to="/entrance"
         class="tab-link"
-        :class="{ 'active': activeTab === 'entrance' }"
+        :class="{ active: activeTab === 'entrance' }"
         @click="activeTab = 'entrance'"
       >
         ورود کالا
       </RouterLink>
-      <RouterLink 
-        to="/settings" 
+
+      <RouterLink
+        to="/product-groups"
         class="tab-link"
-        :class="{ 'active': activeTab === 'settings' }"
+        :class="{ active: activeTab === 'product-groups' }"
+        @click="activeTab = 'product-groups'"
+      >
+        نوع کالا
+      </RouterLink>
+
+      <RouterLink
+        to="/settings"
+        class="tab-link"
+        :class="{ active: activeTab === 'settings' }"
         @click="activeTab = 'settings'"
       >
         تنظیمات
@@ -76,11 +83,11 @@ const isDarkMode = computed(() => {
     <main class="tab-content">
       <RouterView />
     </main>
- </div>
+  </div>
 </template>
 
 <style scoped>
-h1{
+h1 {
   color: var(--text-primary);
 }
 :root {
@@ -89,9 +96,9 @@ h1{
   --text-primary: #1a1a1a;
   --text-secondary: #6666;
   --border-color: #e1e5e9;
- --accent: #6366f1;
+  --accent: #6366f1;
   --accent-light: #e0e7ff;
- --success: #10b981;
+  --success: #10b981;
   --danger: #ef4444;
   --header-bg: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
   --shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
@@ -100,11 +107,11 @@ h1{
 [data-theme="dark"] {
   --bg-primary: #1a1a1a;
   --bg-secondary: #2d2d;
- --text-primary: #ffffff;
+  --text-primary: #ffffff;
   --text-secondary: #b0b0b0;
   --border-color: #404040;
   --accent: #818cf8;
- --accent-light: #312e81;
+  --accent-light: #312e81;
   --success: #34d399;
   --danger: #f87171;
   --header-bg: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
@@ -115,10 +122,11 @@ h1{
   min-height: 100vh;
   background-color: var(--bg-primary);
   color: var(--text-primary);
- display: flex;
+  display: flex;
   flex-direction: column;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
- transition: background-color 0.3s ease, color 0.3s ease;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
+    Ubuntu, Cantarell, sans-serif;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 .app-header {
@@ -149,12 +157,12 @@ h1{
   color: white;
   font-size: 1.5rem;
   width: 44px;
- height: 44px;
+  height: 44px;
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.3s ease;
   display: flex;
- align-items: center;
+  align-items: center;
   justify-content: center;
   padding: 0;
 }
@@ -167,7 +175,7 @@ h1{
 .tab-navigation {
   display: flex;
   background-color: var(--bg-secondary);
- border-bottom: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--border-color);
   gap: 0;
 }
 
@@ -177,10 +185,10 @@ h1{
   text-align: center;
   text-decoration: none;
   color: var(--text-secondary);
- transition: all 0.3s ease;
+  transition: all 0.3s ease;
   border-bottom: 3px solid transparent;
- background-color: var(--bg-secondary);
- font-weight: 500;
+  background-color: var(--bg-secondary);
+  font-weight: 500;
 }
 
 .tab-link:hover {
@@ -205,13 +213,13 @@ h1{
   .app-header h1 {
     font-size: 1.2rem;
   }
-  
+
   .theme-toggle {
     width: 40px;
     height: 40px;
     font-size: 1.2rem;
   }
-  
+
   .tab-link {
     padding: 0.75rem 0.5rem;
     font-size: 0.9rem;
@@ -222,10 +230,10 @@ h1{
   .app-header h1 {
     font-size: 1rem;
   }
-  
+
   .tab-link {
     padding: 0.65rem 0.25rem;
     font-size: 0.8rem;
- }
+  }
 }
 </style>

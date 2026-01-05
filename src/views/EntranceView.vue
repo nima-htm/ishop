@@ -2,6 +2,12 @@
 import { ref, onMounted, computed } from "vue";
 import DatabaseService from "../services/DatabaseService";
 
+// Utility function to format numbers with thousand separator
+const formatNumberWithSeparator = (num) => {
+  if (!num) return "0";
+  return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+};
+
 // Initialize database
 onMounted(async () => {
   await DatabaseService.init();
@@ -122,7 +128,7 @@ const selectProduct = (product) => {
 const calculateTotalCost = () => {
   const quantity = parseFloat(form.value.quantity) || 0;
   const costPerProduct = parseFloat(form.value.finished_cost_per_product) || 0;
-  form.value.total_finished_cost = (quantity * costPerProduct).toFixed(2);
+  form.value.total_finished_cost = (quantity * costPerProduct).toFixed(0);
 };
 
 // Form validation
@@ -244,7 +250,6 @@ const getProductName = (productCode) => {
       <div v-if="isFormMinimized" class="entrance-form">
         <div class="form-grid">
           <div class="form-group">
-            <label for="product_search">انتخاب کالا</label>
             <div class="search-container">
               <input
                 type="text"
@@ -322,7 +327,24 @@ const getProductName = (productCode) => {
                 v-model="form.total_finished_cost"
                 readonly
                 placeholder="0"
+                style="display: none"
               />
+              <div
+                style="
+                  width: 100%;
+                  padding: 0.6rem;
+                  border: 2px solid var(--border-color);
+                  border-radius: 8px;
+                  font-size: 0.8rem;
+                  background: var(--bg-primary);
+                  color: var(--text-primary);
+                  display: flex;
+                  align-items: center;
+                  font-weight: 600;
+                "
+              >
+                {{ formatNumberWithSeparator(form.total_finished_cost) }}
+              </div>
             </div>
           </div>
 
@@ -346,7 +368,7 @@ const getProductName = (productCode) => {
                 id="description"
                 v-model="form.description"
                 placeholder="توضیحات اضافی (اختیاری)"
-                rows="2"
+                rows="1"
               ></textarea>
             </div>
           </div>
