@@ -2,10 +2,11 @@ import { createRouter, createWebHistory } from 'vue-router'
 import DashboardView from './views/DashboardView.vue'
 import ProductGroupView from './views/ProductGroupView.vue'
 import ProductView from './views/ProductView.vue'
+import EntranceView from './views/EntranceView.vue'
 import SettingsView from './views/SettingsView.vue'
 
 const routes = [
-  {
+ {
     path: '/',
     redirect: '/dashboard'
   },
@@ -13,7 +14,7 @@ const routes = [
     path: '/dashboard',
     name: 'dashboard',
     component: DashboardView
-  },
+ },
   {
     path: '/product-groups',
     name: 'product-groups',
@@ -23,7 +24,12 @@ const routes = [
     path: '/products',
     name: 'products',
     component: ProductView
- },
+  },
+  {
+    path: '/entrance',
+    name: 'entrance',
+    component: EntranceView
+  },
   {
     path: '/settings',
     name: 'settings',

@@ -99,9 +99,9 @@ const validateForm = () => {
   errors.value = {}
   
   if (!form.value.group_name.trim()) {
-    errors.value.group_name = 'نام نوع کالا اجباری است'
+    errors.value.group_name = 'نوع کالا اجباری است'
   } else if (form.value.group_name.trim().length > 128) {
-    errors.value.group_name = 'نام نوع کالا نباید بیشتر از 128 کاراکتر باشد'
+    errors.value.group_name = ' نوع کالا نباید بیشتر از 128 کاراکتر باشد'
   }
   
   return Object.keys(errors.value).length === 0
@@ -121,15 +121,15 @@ const handleSubmit = async (e) => {
   try {
     if (isEditing.value && editingId.value) {
       await DataService.updateProductGroup(editingId.value, group)
-      alert('نوع کالا کالا با موفقیت به روزرسانی شد')
+      alert('نوع کالا با موفقیت به روزرسانی شد')
     } else {
       await DataService.saveProductGroup(group)
-      alert('نوع کالا کالا با موفقیت افزوده شد')
+      alert('نوع کالا با موفقیت افزوده شد')
     }
     await resetForm()
   } catch (error) {
     console.error('Error saving product group:', error)
-    alert('خطا در ذخیره نوع کالا کالا!')
+    alert('خطا در ذخیره نوع کالا!')
   }
 }
 
@@ -153,17 +153,16 @@ const deleteProductGroup = async (id) => {
 
 <template>
   <div class="product-group-view">
-    <h2>{{ isEditing ? 'ویرایش نوع کالا کالا' : 'افزودن نوع کالا کالا جدید' }}</h2>
-    
+    <h2>{{ isEditing ? 'ویرایش نوع کالا' : 'افزودن نوع کالا جدید' }}</h2>
+    <br />
     <form @submit="handleSubmit" class="product-group-form">
       <div class="form-group">
-        <label for="group_name">نام نوع کالا کالا</label>
-        <input
+    <input
           type="text"
           id="group_name"
           v-model="form.group_name"
           :class="{ 'error': errors.group_name }"
-          placeholder="نام نوع کالا کالا را وارد کنید (حداکثر 128 کاراکتر)"
+          placeholder="نام نوع کالا را وارد کنید"
         />
         <span v-if="errors.group_name" class="error-message">
           {{ errors.group_name }}

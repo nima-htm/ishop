@@ -1,7 +1,7 @@
 class DatabaseService {
   constructor() {
     this.dbName = 'iShopDB';
-    this.version = 1;
+    this.version = 2;
     this.db = null;
   }
 
@@ -41,7 +41,17 @@ class DatabaseService {
           productStore.createIndex('product_code', 'product_code', { unique: true });
           productStore.createIndex('name', 'name', { unique: false });
           productStore.createIndex('product_group_code', 'product_group_code', { unique: false });
-          productStore.createIndex('date_added', 'date_added', { unique: false });
+
+        }
+
+        // Create entrance store
+        if (!db.objectStoreNames.contains('entrances')) {
+          const entranceStore = db.createObjectStore('entrances', { 
+            keyPath: 'id', 
+            autoIncrement: true 
+          });
+          entranceStore.createIndex('product_code', 'product_code', { unique: false });
+          entranceStore.createIndex('date', 'date', { unique: false });
         }
 
         // Create settings store
@@ -147,7 +157,7 @@ class DatabaseService {
       ...product,
       id: Date.now(), // Use timestamp as ID
       product_code: `P${(Date.now() % 100000).toString().padStart(5, '0')}`, // Auto-generate product code
-      date_added: product.date_added || new Date().toISOString()
+   
     };
 
     const transaction = this.db.transaction(['products'], 'readwrite');
@@ -216,6 +226,87 @@ async updateProduct(id, productObj) {
       
       request.onsuccess = () => resolve(request.result);
       request.onerror = () => reject(request.error);
+    });
+  }
+
+  // Entrance Methods
+ async addEntrance(entrance) {
+    if (!this.db) await this.init();
+    
+    const entranceObj = {
+      ...entrance,
+      id: Date.now(), // Use timestamp as ID
+      date: entrance.date || new Date().toISOString().split('T')[0]
+    };
+
+    const transaction = this.db.transaction(['entrances'], 'readwrite');
+    const store = transaction.objectStore('entrances');
+    
+    return new Promise((resolve, reject) => {
+      const request = store.add(entranceObj);
+      
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  async getEntrances() {
+    if (!this.db) await this.init();
+    
+    const transaction = this.db.transaction(['entrances'], 'readonly');
+    const store = transaction.objectStore('entrances');
+    
+    return new Promise((resolve, reject) => {
+      const request = store.getAll();
+      
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  async getEntrance(id) {
+    if (!this.db) await this.init();
+    
+    const transaction = this.db.transaction(['entrances'], 'readonly');
+    const store = transaction.objectStore('entrances');
+    
+    return new Promise((resolve, reject) => {
+      const request = store.get(id);
+      
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  async updateProductQuantity(productCode, quantityToAdd) {
+    if (!this.db) await this.init();
+    
+    const transaction = this.db.transaction(['products'], 'readwrite');
+    const store = transaction.objectStore('products');
+    
+    return new Promise(async (resolve, reject) => {
+      try {
+        // Get the product by product_code
+        const productRequest = store.index('product_code').get(productCode);
+        
+        productRequest.onsuccess = () => {
+          const product = productRequest.result;
+          if (product) {
+            // Update the quantity
+            product.quantity = (product.quantity || 0) + quantityToAdd;
+            
+            const updateRequest = store.put(product);
+            updateRequest.onsuccess = () => resolve(updateRequest.result);
+            updateRequest.onerror = () => reject(updateRequest.error);
+          } else {
+            reject(new Error('Product not found'));
+          }
+        };
+        
+        productRequest.onerror = () => reject(productRequest.error);
+      } catch (error) {
+        reject(error);
+      }
     });
   }
 

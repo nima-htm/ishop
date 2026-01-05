@@ -53,7 +53,15 @@ const isDarkMode = computed(() => {
         :class="{ 'active': activeTab === 'products' }"
         @click="activeTab = 'products'"
       >
-        کالاها
+        انبار کالا
+      </RouterLink>
+      <RouterLink 
+        to="/entrance" 
+        class="tab-link"
+        :class="{ 'active': activeTab === 'entrance' }"
+        @click="activeTab = 'entrance'"
+      >
+        ورود کالا
       </RouterLink>
       <RouterLink 
         to="/settings" 
