@@ -1,181 +1,186 @@
 <script setup>
-import { ref, onMounted } from 'vue'
-import DatabaseService from '../services/DatabaseService'
+import { ref, onMounted } from "vue";
+import DatabaseService from "../services/DatabaseService";
 
 // Initialize database
 onMounted(async () => {
-  await DatabaseService.init()
-  await loadProductGroups()
-})
+  await DatabaseService.init();
+  await loadProductGroups();
+});
 
 // Data service using IndexedDB
 const DataService = {
   async getProductGroups() {
     try {
-      return await DatabaseService.getProductGroups()
+      return await DatabaseService.getProductGroups();
     } catch (error) {
-      console.error('Error getting product groups:', error)
-      return []
+      console.error("Error getting product groups:", error);
+      return [];
     }
   },
-  
+
   async saveProductGroup(group) {
     try {
       const groupObj = {
         ...group,
         id: Date.now(), // Use timestamp as ID
-        date_added: new Date().toISOString()
-      }
-      await DatabaseService.addProductGroup(groupObj)
-      return groupObj
+        date_added: new Date().toISOString(),
+      };
+      await DatabaseService.addProductGroup(groupObj);
+      return groupObj;
     } catch (error) {
-      console.error('Error saving product group:', error)
-      throw error
+      console.error("Error saving product group:", error);
+      throw error;
     }
   },
-  
+
   async updateProductGroup(id, updatedGroup) {
     try {
-      const existingGroup = await DatabaseService.getProductGroup(id)
+      const existingGroup = await DatabaseService.getProductGroup(id);
       const groupObj = {
         ...existingGroup,
         ...updatedGroup,
-        id: id
-      }
-      await DatabaseService.updateProductGroup(id, groupObj)
-      return groupObj
+        id: id,
+      };
+      await DatabaseService.updateProductGroup(id, groupObj);
+      return groupObj;
     } catch (error) {
-      console.error('Error updating product group:', error)
-      throw error
+      console.error("Error updating product group:", error);
+      throw error;
     }
   },
-  
+
   async deleteProductGroup(id) {
     try {
-      await DatabaseService.deleteProductGroup(id)
-      return await this.getProductGroups()
+      await DatabaseService.deleteProductGroup(id);
+      return await this.getProductGroups();
     } catch (error) {
-      console.error('Error deleting product group:', error)
-      return []
+      console.error("Error deleting product group:", error);
+      return [];
     }
- }
-}
+  },
+};
 
 const form = ref({
-  group_name: ''
-})
+  group_name: "",
+});
 
-const isEditing = ref(false)
-const editingId = ref(null)
-const productGroups = ref([])
+const isEditing = ref(false);
+const editingId = ref(null);
+const productGroups = ref([]);
 
 // Load product groups
 onMounted(async () => {
- await DatabaseService.init()
-  await loadProductGroups()
-})
+  await DatabaseService.init();
+  await loadProductGroups();
+});
 
 const loadProductGroups = async () => {
-  const allGroups = await DataService.getProductGroups()
+  const allGroups = await DataService.getProductGroups();
   // Sort by date added (newest first)
-  productGroups.value = allGroups.reverse()
-}
+  productGroups.value = allGroups.reverse();
+};
 
 // Reset form after submission
 const resetForm = async () => {
   form.value = {
-    group_name: ''
-  }
-  isEditing.value = false
-  editingId.value = null
-  errors.value = {}
-  await loadProductGroups() // Refresh the list
-}
+    group_name: "",
+  };
+  isEditing.value = false;
+  editingId.value = null;
+  errors.value = {};
+  await loadProductGroups(); // Refresh the list
+};
 
 // Form validation
-const errors = ref({})
+const errors = ref({});
 
 const validateForm = () => {
-  errors.value = {}
-  
+  errors.value = {};
+
   if (!form.value.group_name.trim()) {
-    errors.value.group_name = 'نوع کالا اجباری است'
+    errors.value.group_name = "نوع کالا اجباری است";
   } else if (form.value.group_name.trim().length > 128) {
-    errors.value.group_name = ' نوع کالا نباید بیشتر از 128 کاراکتر باشد'
+    errors.value.group_name = " نوع کالا نباید بیشتر از 128 کاراکتر باشد";
   }
-  
-  return Object.keys(errors.value).length === 0
-}
+
+  return Object.keys(errors.value).length === 0;
+};
 
 const handleSubmit = async (e) => {
-  e.preventDefault()
-  
+  e.preventDefault();
+
   if (!validateForm()) {
-    return
+    return;
   }
-  
+
   const group = {
-    group_name: form.value.group_name.trim()
- }
-  
+    group_name: form.value.group_name.trim(),
+  };
+
   try {
     if (isEditing.value && editingId.value) {
-      await DataService.updateProductGroup(editingId.value, group)
-      alert('نوع کالا با موفقیت به روزرسانی شد')
+      await DataService.updateProductGroup(editingId.value, group);
+      alert("نوع کالا با موفقیت به روزرسانی شد");
     } else {
-      await DataService.saveProductGroup(group)
-      alert('نوع کالا با موفقیت افزوده شد')
+      await DataService.saveProductGroup(group);
+      alert("نوع کالا با موفقیت افزوده شد");
     }
-    await resetForm()
+    await resetForm();
   } catch (error) {
-    console.error('Error saving product group:', error)
-    alert('خطا در ذخیره نوع کالا!')
+    console.error("Error saving product group:", error);
+    alert("خطا در ذخیره نوع کالا!");
   }
-}
+};
 
 // Edit product group function
 const editProductGroup = (group) => {
   form.value = {
-    group_name: group.group_name
-  }
- isEditing.value = true
-  editingId.value = group.id
-}
+    group_name: group.group_name,
+  };
+  isEditing.value = true;
+  editingId.value = group.id;
+};
 
 // Delete product group function
 const deleteProductGroup = async (id) => {
-  if (confirm('آیا از حذف این نوع کالا کالا اطمینان دارید؟')) {
-    await DataService.deleteProductGroup(id)
-    await loadProductGroups()
+  if (confirm("آیا از حذف این نوع کالا کالا اطمینان دارید؟")) {
+    await DataService.deleteProductGroup(id);
+    await loadProductGroups();
   }
-}
+};
 </script>
 
 <template>
   <div class="product-group-view">
-    <h2>{{ isEditing ? 'ویرایش نوع کالا' : 'افزودن نوع کالا جدید' }}</h2>
+    <div class="header-section">
+      <h2>{{ isEditing ? "ویرایش نوع کالا" : "افزودن نوع کالا جدید" }}</h2>
+      <router-link to="/dashboard" class="back-to-dashboard">
+        ← داشبورد
+      </router-link>
+    </div>
     <br />
     <form @submit="handleSubmit" class="product-group-form">
       <div class="form-group">
-    <input
+        <input
           type="text"
           id="group_name"
           v-model="form.group_name"
-          :class="{ 'error': errors.group_name }"
+          :class="{ error: errors.group_name }"
           placeholder="نام نوع کالا را وارد کنید"
         />
         <span v-if="errors.group_name" class="error-message">
           {{ errors.group_name }}
         </span>
       </div>
-      
+
       <div class="form-actions">
         <button type="submit" class="submit-btn">
-          {{ isEditing ? 'به روزرسانی' : 'ثبت' }}
+          {{ isEditing ? "به روزرسانی" : "ثبت" }}
         </button>
-        <button 
-          type="button" 
-          @click="resetForm" 
+        <button
+          type="button"
+          @click="resetForm"
           class="cancel-btn"
           v-if="isEditing"
         >
@@ -183,7 +188,7 @@ const deleteProductGroup = async (id) => {
         </button>
       </div>
     </form>
-    
+
     <div class="existing-product-groups">
       <h3>نوع کالا های کالا</h3>
       <div class="table-container">
@@ -200,15 +205,14 @@ const deleteProductGroup = async (id) => {
             <tr v-for="group in productGroups" :key="group.id">
               <td>{{ group.product_group_code }}</td>
               <td>{{ group.group_name }}</td>
-              <td>{{ new Date(group.date_added).toLocaleDateString('fa-IR') }}</td>
               <td>
-                <button 
-                  @click="editProductGroup(group)"
-                  class="edit-btn"
-                >
+                {{ new Date(group.date_added).toLocaleDateString("fa-IR") }}
+              </td>
+              <td>
+                <button @click="editProductGroup(group)" class="edit-btn">
                   ویرایش
                 </button>
-                <button 
+                <button
                   @click="deleteProductGroup(group.id)"
                   class="delete-btn"
                 >
@@ -218,7 +222,7 @@ const deleteProductGroup = async (id) => {
             </tr>
           </tbody>
         </table>
-        
+
         <div v-if="productGroups.length === 0" class="no-data">
           نوع کالا کالایی یافت نشد
         </div>
@@ -229,7 +233,7 @@ const deleteProductGroup = async (id) => {
 
 <style scoped>
 input {
-  font-family: 'Arad', sans-serif;
+  font-family: "Arad", sans-serif;
 }
 
 :root {
@@ -269,11 +273,35 @@ input {
   font-size: 1.75rem;
 }
 
+.header-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  align-items: center;
+}
+
+.back-to-dashboard {
+  background: var(--accent);
+  color: white;
+  text-decoration: none;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.back-to-dashboard:hover {
+  background: var(--accent-light);
+  transform: translateY(-2px);
+}
+
 .product-group-form {
   background: var(--bg-secondary);
   padding: 1.5rem;
   border-radius: 12px;
- box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   margin-bottom: 2rem;
   border: 1px solid var(--border-color);
 }
@@ -285,7 +313,7 @@ input {
 .form-group label {
   display: block;
   margin-bottom: 0.5rem;
- font-weight: 600;
+  font-weight: 600;
   color: var(--text-primary);
   font-size: 0.95rem;
 }
@@ -298,7 +326,7 @@ input {
   font-size: 1rem;
   background: var(--bg-primary);
   color: var(--text-primary);
- transition: all 0.3s ease;
+  transition: all 0.3s ease;
   box-sizing: border-box;
 }
 
@@ -328,7 +356,7 @@ input {
 .submit-btn {
   background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
   color: white;
- border: none;
+  border: none;
   padding: 0.85rem 1.5rem;
   border-radius: 8px;
   font-size: 1rem;
@@ -349,8 +377,8 @@ input {
 
 .cancel-btn {
   background: var(--text-secondary);
- color: white;
- border: none;
+  color: white;
+  border: none;
   padding: 0.85rem 1.5rem;
   border-radius: 8px;
   font-size: 1rem;
@@ -366,7 +394,7 @@ input {
 .existing-product-groups {
   background: var(--bg-secondary);
   padding: 1.5rem;
- border-radius: 12px;
+  border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0, 0, 0.1);
   border: 1px solid var(--border-color);
 }
@@ -392,7 +420,7 @@ input {
   padding: 1rem 0.75rem;
   text-align: center;
   border-bottom: 1px solid var(--border-color);
- color: var(--text-primary);
+  color: var(--text-primary);
 }
 
 .groups-table th {
@@ -419,11 +447,11 @@ input {
   background: var(--accent);
   color: white;
   border: none;
- padding: 0.4rem 0.75rem;
+  padding: 0.4rem 0.75rem;
   border-radius: 6px;
   cursor: pointer;
   font-size: 0.8rem;
- font-weight: 600;
+  font-weight: 600;
   margin-left: 0.5rem;
   transition: all 0.3s ease;
 }
@@ -441,8 +469,8 @@ input {
   border-radius: 6px;
   cursor: pointer;
   font-size: 0.8rem;
- font-weight: 600;
- transition: all 0.3s ease;
+  font-weight: 600;
+  transition: all 0.3s ease;
 }
 
 .delete-btn:hover {
@@ -454,7 +482,7 @@ input {
   text-align: center;
   padding: 3rem 1rem;
   color: var(--text-secondary);
- font-style: italic;
+  font-style: italic;
   font-size: 1.05rem;
 }
 
@@ -470,7 +498,7 @@ input {
 
   .product-group-form {
     padding: 1rem;
- }
+  }
 
   .form-actions {
     flex-direction: column;
@@ -486,7 +514,7 @@ input {
     padding: 0.3rem 0.6rem;
     font-size: 0.75rem;
     margin-left: 0.25rem;
- }
+  }
 
   .delete-btn {
     padding: 0.3rem 0.6rem;
@@ -501,13 +529,13 @@ input {
 
   .product-group-view h2 {
     font-size: 1.2rem;
- }
+  }
 
   .groups-table {
     font-size: 0.85rem;
   }
 
- .groups-table th,
+  .groups-table th,
   .groups-table td {
     padding: 0.6rem 0.4rem;
   }

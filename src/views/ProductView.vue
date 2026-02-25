@@ -143,8 +143,11 @@ const validateForm = () => {
     errors.value.product_group_code = "نوع کالا اجباری است";
   }
 
-  if (!form.value.quantity || parseFloat(form.value.quantity) < 0) {
-    errors.value.quantity = "تعداد باید عددی بزرگتر از صفر باشد";
+  if (
+    (!form.value.quantity && form.value.quantity !== 0) ||
+    parseFloat(form.value.quantity) < 0
+  ) {
+    errors.value.quantity = "تعداد باید عددی مثبت یا صفر باشد";
   }
 
   return Object.keys(errors.value).length === 0;
@@ -233,7 +236,12 @@ const filteredProducts = computed(() => {
 
 <template>
   <div class="product-view">
-    <h2>مدیریت انبار</h2>
+    <div class="header-section">
+      <h2>مدیریت انبار</h2>
+      <router-link to="/dashboard" class="back-to-dashboard">
+        ← داشبورد
+      </router-link>
+    </div>
 
     <!-- Search Section -->
     <div class="search-section">
@@ -328,7 +336,7 @@ const filteredProducts = computed(() => {
         <div class="form-grid">
           <div class="form-grid">
             <div class="form-group quantity-group">
-              <label for="quantity">تعداد</label>
+              <label for="quantity">تعداد / متراژ</label>
               <input
                 type="number"
                 id="quantity"
@@ -369,7 +377,7 @@ const filteredProducts = computed(() => {
               <th>نوع کالا</th>
               <th class="title">شرح کالا</th>
               <th class="descrip">جزییات</th>
-              <th>تعداد</th>
+              <th>تعداد / متراژ</th>
               <th>عملیات</th>
             </tr>
           </thead>
@@ -444,6 +452,30 @@ textarea {
   color: var(--text-primary);
   text-align: center;
   font-size: 1.75rem;
+}
+
+.header-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  align-items: center;
+}
+
+.back-to-dashboard {
+  background: var(--accent);
+  color: white;
+  text-decoration: none;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.back-to-dashboard:hover {
+  background: var(--accent-light);
+  transform: translateY(-2px);
 }
 
 /* Search Section */

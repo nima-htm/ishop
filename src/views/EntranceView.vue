@@ -1,6 +1,12 @@
 <script setup>
 import { ref, onMounted, computed } from "vue";
 import DatabaseService from "../services/DatabaseService";
+import DatePicker from "@alireza-ab/vue3-persian-datepicker";
+import dayjs from "dayjs";
+import "dayjs/locale/fa";
+import jalaliday from "jalaliday";
+
+dayjs.extend(jalaliday);
 
 // Utility function to format numbers with thousand separator
 const formatNumberWithSeparator = (num) => {
@@ -40,7 +46,7 @@ const DataService = {
       const entranceObj = {
         ...entrance,
         id: Date.now(),
-        date: entrance.date || new Date().toISOString().split("T")[0],
+        date: entrance.date || dayjs().format("YYYY-MM-DD"),
       };
       await DatabaseService.addEntrance(entranceObj);
       return entranceObj;
@@ -67,7 +73,7 @@ const form = ref({
   quantity: "",
   finished_cost_per_product: "",
   total_finished_cost: "",
-  date: new Date().toISOString().split("T")[0],
+  date: dayjs().format("YYYY-MM-DD"), // Use dayjs to format the date
   description: "",
 });
 
@@ -202,7 +208,7 @@ const resetForm = async () => {
     quantity: "",
     finished_cost_per_product: "",
     total_finished_cost: "",
-    date: new Date().toISOString().split("T")[0],
+    date: dayjs().format("YYYY-MM-DD"),
     description: "",
   };
   errors.value = {};
@@ -236,7 +242,12 @@ const getProductName = (productCode) => {
 
 <template>
   <div class="entrance-view">
-    <h2>ورود کالا</h2>
+    <div class="header-section">
+      <h2>ورود کالا</h2>
+      <router-link to="/dashboard" class="back-to-dashboard">
+        ← داشبورد
+      </router-link>
+    </div>
 
     <!-- Minimizable Form Section -->
     <div class="form-section">
@@ -351,11 +362,13 @@ const getProductName = (productCode) => {
           <div class="form-grid">
             <div class="form-group">
               <label for="date">تاریخ</label>
-              <input
-                type="date"
-                id="date"
+              <DatePicker
                 v-model="form.date"
                 :class="{ error: errors.date }"
+                format="YYYY-MM-DD"
+                displayFormat="jYYYY/jMM/jDD"
+                placeholder="تاریخ را انتخاب کنید"
+                :persianDigits="true"
               />
               <span v-if="errors.date" class="error-message">
                 {{ errors.date }}
@@ -407,9 +420,13 @@ const getProductName = (productCode) => {
               <td>{{ getProductName(entrance.product_code) }}</td>
               <td class="number-cell">{{ entrance.quantity }}</td>
               <td class="number-cell">
-                {{ entrance.finished_cost_per_product }}
+                {{
+                  formatNumberWithSeparator(entrance.finished_cost_per_product)
+                }}
               </td>
-              <td class="number-cell">{{ entrance.total_finished_cost }}</td>
+              <td class="number-cell">
+                {{ formatNumberWithSeparator(entrance.total_finished_cost) }}
+              </td>
               <td>{{ entrance.date }}</td>
               <td>{{ entrance.description || "-" }}</td>
             </tr>
@@ -466,6 +483,30 @@ textarea {
   color: var(--text-primary);
   text-align: center;
   font-size: 1.75rem;
+}
+
+.header-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  align-items: center;
+}
+
+.back-to-dashboard {
+  background: var(--accent);
+  color: white;
+  text-decoration: none;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.back-to-dashboard:hover {
+  background: var(--accent-light);
+  transform: translateY(-2px);
 }
 
 /* Search Section */

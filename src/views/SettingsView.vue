@@ -1,201 +1,178 @@
 <script setup>
-import { ref, onMounted } from 'vue'
-import DatabaseService from '../services/DatabaseService'
-import { updateDateFormat } from '../utils/dateFormatter'
-
+import { ref, onMounted } from "vue";
+import DatabaseService from "../services/DatabaseService";
+import { updateDateFormat } from "../utils/dateFormatter";
+import "primeicons/primeicons.css";
 // Initialize database
 onMounted(async () => {
-  await DatabaseService.init()
-  await loadDateFormat()
-  await loadDatabaseStats()
-})
+  await DatabaseService.init();
+  await loadDateFormat();
+  await loadDatabaseStats();
+});
 
 // App preferences
-const theme = ref('light')
-const language = ref('fa')
-const notifications = ref(true)
-const dateFormat = ref('Shamsi')
+const theme = ref("light");
+const language = ref("fa");
+const notifications = ref(true);
+const dateFormat = ref("Shamsi");
 
 // Database stats
 const databaseStats = ref({
   transactionCount: 0,
-  settingsCount: 0
-})
+  settingsCount: 0,
+});
 
 // Loading states
-const isExporting = ref(false)
-const isImporting = ref(false)
-const importFile = ref(null)
+const isExporting = ref(false);
+const isImporting = ref(false);
+const importFile = ref(null);
 
 // Load date format setting from database
 const loadDateFormat = async () => {
   try {
-    const savedFormat = await DatabaseService.getSetting('dateFormat')
+    const savedFormat = await DatabaseService.getSetting("dateFormat");
     if (savedFormat) {
-      dateFormat.value = savedFormat
+      dateFormat.value = savedFormat;
     } else {
       // Default to Shamsi
-      await DatabaseService.setSetting('dateFormat', 'Shamsi')
+      await DatabaseService.setSetting("dateFormat", "Shamsi");
     }
   } catch (error) {
-    console.error('Error loading date format:', error)
+    console.error("Error loading date format:", error);
   }
-}
+};
 
 // Save date format setting to database
 const saveDateFormat = async () => {
   try {
-    await DatabaseService.setSetting('dateFormat', dateFormat.value)
+    await DatabaseService.setSetting("dateFormat", dateFormat.value);
     // Update the cache in the utility
-    updateDateFormat(dateFormat.value)
+    updateDateFormat(dateFormat.value);
   } catch (error) {
-    console.error('Error saving date format:', error)
+    console.error("Error saving date format:", error);
   }
-}
+};
 
 // Load database statistics
 const loadDatabaseStats = async () => {
   try {
-    const stats = await DatabaseService.getDatabaseStats()
-    databaseStats.value = stats
+    const stats = await DatabaseService.getDatabaseStats();
+    databaseStats.value = stats;
   } catch (error) {
-    console.error('Error loading database stats:', error)
+    console.error("Error loading database stats:", error);
   }
-}
+};
 
 // Export data to JSON file
 const exportData = async () => {
   try {
-    isExporting.value = true
-    
-    const exportData = await DatabaseService.exportData()
-    const jsonString = JSON.stringify(exportData, null, 2)
-    const blob = new Blob([jsonString], { type: 'application/json' })
-    const url = URL.createObjectURL(blob)
-    
-    const a = document.createElement('a')
-    a.href = url
-    a.download = 'ishopDB.json'
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    URL.revokeObjectURL(url)
-    
-    alert('داده‌ها با موفقیت خارج شدند!')
+    isExporting.value = true;
+
+    const exportData = await DatabaseService.exportData();
+    const jsonString = JSON.stringify(exportData, null, 2);
+    const blob = new Blob([jsonString], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "ishopDB.json";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    alert("داده‌ها با موفقیت خارج شدند!");
   } catch (error) {
-    console.error('Export error:', error)
-    alert('خطا در خروج داده‌ها: ' + error.message)
+    console.error("Export error:", error);
+    alert("خطا در خروج داده‌ها: " + error.message);
   } finally {
-    isExporting.value = false
+    isExporting.value = false;
   }
-}
+};
 
 // Import data from JSON file
 const handleFileImport = async (event) => {
-  const file = event.target.files[0]
-  if (!file) return
+  const file = event.target.files[0];
+  if (!file) return;
 
-  if (file.type !== 'application/json') {
-    alert('لطفاً یک فایل JSON معتبر انتخاب کنید')
-    return
+  if (file.type !== "application/json") {
+    alert("لطفاً یک فایل JSON معتبر انتخاب کنید");
+    return;
   }
 
   try {
-    isImporting.value = true
-    
-    const confirmImport = confirm('آیا مطمئن هستید که می‌خواهید داده‌ها را بازیابی کنید؟ این عملیات داده‌های فعلی را جایگزین می‌کند.')
-    if (!confirmImport) return
+    isImporting.value = true;
 
-    const text = await file.text()
-    const importData = JSON.parse(text)
+    const confirmImport = confirm(
+      "آیا مطمئن هستید که می‌خواهید داده‌ها را بازیابی کنید؟ این عملیات داده‌های فعلی را جایگزین می‌کند."
+    );
+    if (!confirmImport) return;
+
+    const text = await file.text();
+    const importData = JSON.parse(text);
 
     // Validate required fields
-    if (!importData.transactions || !importData.settings || !importData.version) {
-      throw new Error('ساختار فایل وارد شده معتبر نیست')
+    if (
+      !importData.transactions ||
+      !importData.settings ||
+      !importData.version
+    ) {
+      throw new Error("ساختار فایل وارد شده معتبر نیست");
     }
 
-    await DatabaseService.importData(importData)
-    await loadDatabaseStats()
-    
-    alert('داده‌ها با موفقیت بازیابی شدند!')
+    await DatabaseService.importData(importData);
+    await loadDatabaseStats();
+
+    alert("داده‌ها با موفقیت بازیابی شدند!");
   } catch (error) {
-    console.error('Import error:', error)
-    alert('خطا در بازیابی داده‌ها: ' + error.message)
+    console.error("Import error:", error);
+    alert("خطا در بازیابی داده‌ها: " + error.message);
   } finally {
-    isImporting.value = false
+    isImporting.value = false;
     // Reset file input
-    event.target.value = ''
+    event.target.value = "";
   }
-}
+};
 
 // Trigger file selection
-const importFileInput = ref(null)
+const importFileInput = ref(null);
 
 const triggerFileSelect = () => {
   if (importFileInput.value) {
-    importFileInput.value.click()
+    importFileInput.value.click();
   }
-}
-
-// Clear all data
-const clearAllData = async () => {
-  const confirmClear = confirm('آیا مطمئن هستید که می‌خواهید تمام داده‌ها را پاک کنید؟ این عملیات قابل بازگشت نیست.')
-  if (!confirmClear) return
-
- try {
-    // Clear all transactions
-    await DatabaseService.clearTransactions()
-    
-    // Clear all settings
-    const settingsStore = DatabaseService.db.transaction(['settings'], 'readwrite');
-    const store = settingsStore.objectStore('settings');
-    
-    await new Promise((resolve, reject) => {
-      const request = store.clear();
-      request.onsuccess = () => resolve(request.result);
-      request.onerror = () => reject(request.error);
-    });
-    
-    await loadDatabaseStats()
-    alert('داده‌ها با موفقیت پاک شدند!')
-  } catch (error) {
-    console.error('Clear error:', error)
-    alert('خطا در پاک کردن داده‌ها: ' + error.message)
-  }
-}
+};
 
 // Format numbers for display
 const formatNumber = (num) => {
-  return new Intl.NumberFormat('fa-IR').format(num)
-}
+  return new Intl.NumberFormat("fa-IR").format(num);
+};
 </script>
 
 <template>
- <div class="settings-view">
-    <h2>تنظیمات</h2>
-    
-        <!-- Database Settings Section -->
+  <div class="settings-view">
+    <div class="header-section">
+      <h2>تنظیمات</h2>
+      <router-link to="/dashboard" class="back-to-dashboard">
+        ← داشبورد
+      </router-link>
+    </div>
+
+    <!-- Database Settings Section -->
     <div class="settings-section">
       <h3>تنظیمات پایگاه داده</h3>
-      
 
-      
       <!-- Export Button -->
       <div class="setting-item">
-        <button
-          @click="exportData"
-          :disabled="isExporting"
-          class="export-btn"
-        >
+        <button @click="exportData" :disabled="isExporting" class="export-btn">
           <span v-if="isExporting">در حال صدور...</span>
           <span v-else>
-            <i class="icon">💾</i>
+            <i class="pi pi-file-export" style="font-size: 1.2rem"> </i>
             صدور داده‌ها به حافظه داخلی
           </span>
         </button>
-        
       </div>
-      
+
       <!-- Import Button -->
       <div class="setting-item">
         <input
@@ -204,7 +181,7 @@ const formatNumber = (num) => {
           accept=".json"
           @change="handleFileImport"
           :disabled="isImporting"
-          style="display: none;"
+          style="display: none"
         />
         <button
           @click="triggerFileSelect"
@@ -213,31 +190,17 @@ const formatNumber = (num) => {
         >
           <span v-if="isImporting">در حال وارد کردن...</span>
           <span v-else>
-            <i class="icon">📁</i>
+            <i class="pi pi-file-import" style="font-size: 1.2rem"> </i>
+
             وارد کردن داده‌ها از حافظه داخلی
           </span>
         </button>
-      
-      </div>
-      
-      <!-- Clear Data Button -->
-      <div class="setting-item">
-        <button
-          @click="clearAllData"
-          class="clear-btn"
-        >
-          <i class="icon">🗑️</i>
-          پاک کردن همه داده‌ها
-        </button>
-     
       </div>
     </div>
     <!-- App Preferences Section -->
     <div class="settings-section">
       <h3>تنظیمات برنامه</h3>
-      
 
-      
       <div class="setting-item">
         <label for="date_format">قالب تاریخ</label>
         <select id="date_format" v-model="dateFormat" @change="saveDateFormat">
@@ -245,11 +208,7 @@ const formatNumber = (num) => {
           <option value="Miladi">میلادی</option>
         </select>
       </div>
-      
-
     </div>
-    
-
   </div>
 </template>
 
@@ -291,11 +250,35 @@ const formatNumber = (num) => {
   font-size: 1.75rem;
 }
 
+.header-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  align-items: center;
+}
+
+.back-to-dashboard {
+  background: var(--accent);
+  color: white;
+  text-decoration: none;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.back-to-dashboard:hover {
+  background: var(--accent-light);
+  transform: translateY(-2px);
+}
+
 .settings-section {
   background: var(--bg-secondary);
   padding: 1.5rem;
- border-radius: 12px;
- box-shadow: 0 2px 8px rgba(0, 0, 0.1);
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0.1);
   margin-bottom: 1.5rem;
   border: 1px solid var(--border-color);
 }
@@ -318,7 +301,7 @@ const formatNumber = (num) => {
   margin-bottom: 0.5rem;
   font-weight: 600;
   color: var(--text-primary);
- font-size: 0.95rem;
+  font-size: 0.95rem;
 }
 
 .setting-item select {
@@ -329,12 +312,12 @@ const formatNumber = (num) => {
   font-size: 1rem;
   background: var(--bg-primary);
   color: var(--text-primary);
- transition: all 0.3s ease;
+  transition: all 0.3s ease;
   box-sizing: border-box;
 }
 
 .setting-item select:focus {
- outline: none;
+  outline: none;
   border-color: var(--accent);
   box-shadow: 0 0 3px var(--accent-light);
 }
@@ -407,7 +390,7 @@ const formatNumber = (num) => {
 
 .database-stats {
   display: grid;
- grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   gap: 1rem;
   margin-bottom: 1.5rem;
 }
@@ -429,7 +412,7 @@ const formatNumber = (num) => {
 .stat-card .stat-number {
   margin: 0;
   font-size: 1.5rem;
- font-weight: 700;
+  font-weight: 700;
   color: var(--text-primary);
 }
 
@@ -448,7 +431,7 @@ const formatNumber = (num) => {
     font-size: 1.4rem;
   }
 
- .settings-section {
+  .settings-section {
     padding: 1rem;
   }
 
@@ -473,19 +456,19 @@ const formatNumber = (num) => {
     padding: 0.75rem;
   }
 
- .settings-section h3 {
+  .settings-section h3 {
     font-size: 1.1rem;
   }
 
   .setting-item select {
     font-size: 0.9rem;
- }
+  }
 
   .export-btn,
   .import-btn,
   .clear-btn {
     font-size: 0.9rem;
     padding: 0.75rem 1rem;
- }
+  }
 }
 </style>

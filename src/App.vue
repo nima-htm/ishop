@@ -3,6 +3,7 @@ import { ref, onMounted, computed } from "vue";
 import { RouterLink, RouterView } from "vue-router";
 import "./style.css";
 import ThemeService from "./services/ThemeService";
+import "primeicons/primeicons.css";
 
 const activeTab = ref("dashboard");
 
@@ -23,7 +24,7 @@ const isDarkMode = computed(() => {
   <div id="app" class="app-container">
     <header class="app-header">
       <div class="header-content">
-        <h1>فروشگاه من</h1>
+        <h1>تولید و پخش پوشاک نیما</h1>
         <button
           class="theme-toggle"
           @click="toggleDarkMode"
@@ -34,7 +35,7 @@ const isDarkMode = computed(() => {
       </div>
     </header>
 
-    <nav class="tab-navigation">
+    <!-- <nav class="tab-navigation">
       <RouterLink
         to="/dashboard"
         class="tab-link"
@@ -78,7 +79,7 @@ const isDarkMode = computed(() => {
       >
         تنظیمات
       </RouterLink>
-    </nav>
+    </nav> -->
 
     <main class="tab-content">
       <RouterView />
@@ -124,9 +125,12 @@ h1 {
   color: var(--text-primary);
   display: flex;
   flex-direction: column;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
-    Ubuntu, Cantarell, sans-serif;
-  transition: background-color 0.3s ease, color 0.3s ease;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu,
+    Cantarell, sans-serif;
+  transition:
+    background-color 0.3s ease,
+    color 0.3s ease;
 }
 
 .app-header {

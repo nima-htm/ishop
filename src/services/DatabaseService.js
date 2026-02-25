@@ -540,6 +540,33 @@ async updateProduct(id, productObj) {
       settingsCount.onerror = () => reject(settingsCount.error);
     });
   }
+
+  async exportAllData() {
+    if (!this.db) await this.init();
+    
+    const transaction = this.db.transaction(['productGroups', 'products', 'entrances', 'settings'], 'readonly');
+    
+    return new Promise((resolve, reject) => {
+      const data = {};
+      let completed = 0;
+      const stores = ['productGroups', 'products', 'entrances', 'settings'];
+      
+      stores.forEach(storeName => {
+        const store = transaction.objectStore(storeName);
+        const request = store.getAll();
+        
+        request.onsuccess = () => {
+          data[storeName] = request.result;
+          completed++;
+          if (completed === stores.length) {
+            resolve(data);
+          }
+        };
+        
+        request.onerror = () => reject(request.error);
+      });
+    });
+  }
 }
 
 export default new DatabaseService();
