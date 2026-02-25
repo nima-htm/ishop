@@ -278,6 +278,20 @@ async updateProduct(id, productObj) {
     });
   }
 
+  async deleteAllEntrances() {
+    if (!this.db) await this.init();
+    
+    const transaction = this.db.transaction(['entrances'], 'readwrite');
+    const store = transaction.objectStore('entrances');
+    
+    return new Promise((resolve, reject) => {
+      const request = store.clear();
+      
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+  }
+
   async updateProductQuantity(productCode, quantityToAdd) {
     if (!this.db) await this.init();
     

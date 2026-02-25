@@ -3,6 +3,10 @@ import { ref, onMounted } from "vue";
 import DatabaseService from "../services/DatabaseService";
 import { updateDateFormat } from "../utils/dateFormatter";
 import "primeicons/primeicons.css";
+import { useCustomAlert } from "../utils/useCustomAlert.js";
+
+// Custom alert composable
+const { showSuccess, showError, showWarning, showConfirm } = useCustomAlert();
 // Initialize database
 onMounted(async () => {
   await DatabaseService.init();
@@ -81,10 +85,10 @@ const exportData = async () => {
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
 
-    alert("داده‌ها با موفقیت خارج شدند!");
+    await showSuccess("داده‌ها با موفقیت خارج شدند!");
   } catch (error) {
     console.error("Export error:", error);
-    alert("خطا در خروج داده‌ها: " + error.message);
+    await showError("خطا در خروج داده‌ها: " + error.message);
   } finally {
     isExporting.value = false;
   }
@@ -96,15 +100,18 @@ const handleFileImport = async (event) => {
   if (!file) return;
 
   if (file.type !== "application/json") {
-    alert("لطفاً یک فایل JSON معتبر انتخاب کنید");
+    await showWarning("لطفاً یک فایل JSON معتبر انتخاب کنید");
     return;
   }
 
   try {
     isImporting.value = true;
 
-    const confirmImport = confirm(
-      "آیا مطمئن هستید که می‌خواهید داده‌ها را بازیابی کنید؟ این عملیات داده‌های فعلی را جایگزین می‌کند."
+    const confirmImport = await showConfirm(
+      "آیا مطمئن هستید که می‌خواهید داده‌ها را بازیابی کنید؟ این عملیات داده‌های فعلی را جایگزین می‌کند.",
+      "تأیید بازیابی",
+      "بازیابی",
+      "لغو",
     );
     if (!confirmImport) return;
 
@@ -123,10 +130,10 @@ const handleFileImport = async (event) => {
     await DatabaseService.importData(importData);
     await loadDatabaseStats();
 
-    alert("داده‌ها با موفقیت بازیابی شدند!");
+    await showSuccess("داده‌ها با موفقیت بازیابی شدند!");
   } catch (error) {
     console.error("Import error:", error);
-    alert("خطا در بازیابی داده‌ها: " + error.message);
+    await showError("خطا در بازیابی داده‌ها: " + error.message);
   } finally {
     isImporting.value = false;
     // Reset file input

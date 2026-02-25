@@ -1,6 +1,10 @@
 <script setup>
 import { ref, onMounted } from "vue";
 import DatabaseService from "../services/DatabaseService";
+import { useCustomAlert } from "../utils/useCustomAlert.js";
+
+// Custom alert composable
+const { showSuccess, showError, showConfirm } = useCustomAlert();
 
 // Initialize database
 onMounted(async () => {
@@ -121,15 +125,15 @@ const handleSubmit = async (e) => {
   try {
     if (isEditing.value && editingId.value) {
       await DataService.updateProductGroup(editingId.value, group);
-      alert("نوع کالا با موفقیت به روزرسانی شد");
+      await showSuccess("نوع کالا با موفقیت به روزرسانی شد");
     } else {
       await DataService.saveProductGroup(group);
-      alert("نوع کالا با موفقیت افزوده شد");
+      await showSuccess("نوع کالا با موفقیت افزوده شد");
     }
     await resetForm();
   } catch (error) {
     console.error("Error saving product group:", error);
-    alert("خطا در ذخیره نوع کالا!");
+    await showError("خطا در ذخیره نوع کالا!");
   }
 };
 
@@ -144,7 +148,14 @@ const editProductGroup = (group) => {
 
 // Delete product group function
 const deleteProductGroup = async (id) => {
-  if (confirm("آیا از حذف این نوع کالا کالا اطمینان دارید؟")) {
+  const confirmed = await showConfirm(
+    "آیا از حذف این نوع کالا اطمینان دارید؟",
+    "تأیید حذف",
+    "حذف",
+    "لغو"
+  );
+
+  if (confirmed) {
     await DataService.deleteProductGroup(id);
     await loadProductGroups();
   }

@@ -4,8 +4,12 @@ import DatabaseService from "../services/DatabaseService";
 import dayjs from "dayjs";
 import "dayjs/locale/fa";
 import jalaliday from "jalaliday";
+import { useCustomAlert } from "../utils/useCustomAlert.js";
 
 dayjs.extend(jalaliday);
+
+// Custom alert composable
+const { showSuccess, showError, showConfirm } = useCustomAlert();
 
 // Utility function to format numbers with thousand separator
 const formatNumberWithSeparator = (num) => {
@@ -60,6 +64,15 @@ const DataService = {
       await DatabaseService.updateProductQuantity(productCode, quantityToAdd);
     } catch (error) {
       console.error("Error updating product quantity:", error);
+      throw error;
+    }
+  },
+
+  async deleteAllEntrances() {
+    try {
+      await DatabaseService.deleteAllEntrances();
+    } catch (error) {
+      console.error("Error deleting all entrances:", error);
       throw error;
     }
   },
@@ -185,12 +198,12 @@ const handleSubmit = async (e) => {
       parseFloat(form.value.quantity),
     );
 
-    alert("ورود کالا با موفقیت ثبت شد");
+    await showSuccess("ورود کالا با موفقیت ثبت شد");
     await resetForm();
     await loadEntrances();
   } catch (error) {
     console.error("Error saving entrance:", error);
-    alert("خطا در ذخیره ورود کالا!");
+    await showError("خطا در ذخیره ورود کالا!");
   }
 };
 
@@ -207,6 +220,27 @@ const resetForm = async () => {
   errors.value = {};
   searchResults.value = [];
   showSearchResults.value = false;
+};
+
+// Clear all entrances
+const clearAllEntrances = async () => {
+  const confirmed = await showConfirm(
+    "آیا مطمئن هستید که می‌خواهید تمام سابقه ورودی‌ها را پاک کنید؟ این عمل قابل بازگشت نیست.",
+    "تأیید پاکسازی",
+    "پاکسازی",
+    "لغو",
+  );
+
+  if (confirmed) {
+    try {
+      await DataService.deleteAllEntrances();
+      await loadEntrances();
+      await showSuccess("تمام سابقه ورودی‌ها پاک شد.");
+    } catch (error) {
+      console.error("Error clearing entrances:", error);
+      await showError("خطا در پاکسازی سابقه ورودی‌ها!");
+    }
+  }
 };
 
 // Filtered entrances for display
@@ -236,7 +270,9 @@ const getProductName = (productCode) => {
 <template>
   <div class="entrance-view">
     <div class="header-section">
-      <h2>ورود کالا</h2>
+      <div class="header-left">
+        <h2>ورود کالا</h2>
+      </div>
       <router-link to="/dashboard" class="back-to-dashboard">
         ← داشبورد
       </router-link>
@@ -246,6 +282,7 @@ const getProductName = (productCode) => {
     <div class="form-section">
       <div class="form-header" @click="isFormMinimized = !isFormMinimized">
         <h3>ثبت ورود کالا جدید</h3>
+
         <button class="minimize-btn">
           {{ isFormMinimized ? "بستن" : "باز کردن" }}
         </button>
@@ -379,6 +416,11 @@ const getProductName = (productCode) => {
     <!-- Recent Entrances Table -->
     <div class="recent-entrances">
       <h3>ورودی های اخیر ({{ filteredEntrances.length }} مورد)</h3>
+
+      <button @click="clearAllEntrances" class="clear-history-btn">
+        پاکسازی سابقه ورودی
+      </button>
+
       <div class="table-container">
         <table class="entrances-table">
           <thead>
@@ -468,7 +510,31 @@ textarea {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 1rem;
+}
+
+.header-left {
+  display: flex;
   align-items: center;
+  gap: 1rem;
+}
+
+.clear-history-btn {
+  background: var(--danger);
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  margin-bottom: 1rem;
+
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.clear-history-btn:hover {
+  background: #dc2626;
+  transform: translateY(-2px);
 }
 
 .back-to-dashboard {

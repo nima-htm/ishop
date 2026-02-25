@@ -1,6 +1,10 @@
 <script setup>
 import { ref, onMounted, computed } from "vue";
 import DatabaseService from "../services/DatabaseService";
+import { useCustomAlert } from "../utils/useCustomAlert.js";
+
+// Custom alert composable
+const { showSuccess, showError, showConfirm } = useCustomAlert();
 
 // Initialize database
 onMounted(async () => {
@@ -172,15 +176,15 @@ const handleSubmit = async (e) => {
     if (isEditing.value && editingId.value) {
       await DataService.updateProduct(Number(editingId.value), product);
 
-      alert("کالا با موفقیت به روزرسانی شد");
+      await showSuccess("کالا با موفقیت به روزرسانی شد");
     } else {
       await DataService.saveProduct(product);
-      alert("کالا با موفقیت افزوده شد");
+      await showSuccess("کالا با موفقیت افزوده شد");
     }
     await resetForm();
   } catch (error) {
     console.error("Error saving product:", error);
-    alert("خطا در ذخیره کالا!");
+    await showError("خطا در ذخیره کالا!");
   }
 };
 
@@ -199,7 +203,14 @@ const editProduct = (product) => {
 
 // Delete product function
 const deleteProduct = async (id) => {
-  if (confirm("آیا از حذف این کالا اطمینان دارید؟")) {
+  const confirmed = await showConfirm(
+    "آیا از حذف این کالا اطمینان دارید؟",
+    "تأیید حذف",
+    "حذف",
+    "لغو"
+  );
+
+  if (confirmed) {
     await DataService.deleteProduct(id);
     await loadProducts();
   }
@@ -208,7 +219,7 @@ const deleteProduct = async (id) => {
 // Get product group name by code
 const getProductGroupName = (groupCode) => {
   const group = productGroups.value.find(
-    (g) => g.product_group_code === groupCode
+    (g) => g.product_group_code === groupCode,
   );
   return group ? group.group_name : groupCode;
 };

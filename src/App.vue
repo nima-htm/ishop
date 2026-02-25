@@ -4,8 +4,12 @@ import { RouterLink, RouterView } from "vue-router";
 import "./style.css";
 import ThemeService from "./services/ThemeService";
 import "primeicons/primeicons.css";
+import CustomAlert from "./components/CustomAlert.vue";
+import { useCustomAlert } from "./utils/useCustomAlert.js";
 
 const activeTab = ref("dashboard");
+
+const { alertState, confirmAlert, cancelAlert } = useCustomAlert();
 
 onMounted(() => {
   ThemeService.initializeTheme();
@@ -84,6 +88,19 @@ const isDarkMode = computed(() => {
     <main class="tab-content">
       <RouterView />
     </main>
+
+    <CustomAlert
+      v-model="alertState.isVisible"
+      :type="alertState.type"
+      :title="alertState.title"
+      :message="alertState.message"
+      :confirm-text="alertState.confirmText"
+      :cancel-text="alertState.cancelText"
+      :show-cancel="alertState.showCancel"
+      :close-on-overlay="alertState.closeOnOverlay"
+      @confirm="confirmAlert"
+      @cancel="cancelAlert"
+    />
   </div>
 </template>
 
