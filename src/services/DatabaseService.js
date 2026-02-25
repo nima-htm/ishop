@@ -236,7 +236,7 @@ async updateProduct(id, productObj) {
     const entranceObj = {
       ...entrance,
       id: Date.now(), // Use timestamp as ID
-      date: entrance.date || new Date().toISOString().split('T')[0]
+      date: entrance.date || new Date().toISOString()
     };
 
     const transaction = this.db.transaction(['entrances'], 'readwrite');

@@ -1,7 +1,6 @@
 <script setup>
 import { ref, onMounted, computed } from "vue";
 import DatabaseService from "../services/DatabaseService";
-import DatePicker from "@alireza-ab/vue3-persian-datepicker";
 import dayjs from "dayjs";
 import "dayjs/locale/fa";
 import jalaliday from "jalaliday";
@@ -46,7 +45,7 @@ const DataService = {
       const entranceObj = {
         ...entrance,
         id: Date.now(),
-        date: entrance.date || dayjs().format("YYYY-MM-DD"),
+        date: new Date().toISOString(),
       };
       await DatabaseService.addEntrance(entranceObj);
       return entranceObj;
@@ -73,7 +72,6 @@ const form = ref({
   quantity: "",
   finished_cost_per_product: "",
   total_finished_cost: "",
-  date: dayjs().format("YYYY-MM-DD"), // Use dayjs to format the date
   description: "",
 });
 
@@ -116,7 +114,7 @@ const searchProducts = (query) => {
   const filtered = products.value.filter(
     (product) =>
       product.product_code.toLowerCase().includes(query.toLowerCase()) ||
-      product.name.toLowerCase().includes(query.toLowerCase())
+      product.name.toLowerCase().includes(query.toLowerCase()),
   );
 
   searchResults.value = filtered.slice(0, 10); // Limit to 10 results
@@ -158,10 +156,6 @@ const validateForm = () => {
     errors.value.finished_cost_per_product = "هزینه واحد باید عددی مثبت باشد";
   }
 
-  if (!form.value.date) {
-    errors.value.date = "تاریخ الزامی است";
-  }
-
   return Object.keys(errors.value).length === 0;
 };
 
@@ -188,7 +182,7 @@ const handleSubmit = async (e) => {
     // Update the product quantity
     await DataService.updateProductQuantity(
       form.value.product_code,
-      parseFloat(form.value.quantity)
+      parseFloat(form.value.quantity),
     );
 
     alert("ورود کالا با موفقیت ثبت شد");
@@ -208,7 +202,6 @@ const resetForm = async () => {
     quantity: "",
     finished_cost_per_product: "",
     total_finished_cost: "",
-    date: dayjs().format("YYYY-MM-DD"),
     description: "",
   };
   errors.value = {};
@@ -361,21 +354,6 @@ const getProductName = (productCode) => {
 
           <div class="form-grid">
             <div class="form-group">
-              <label for="date">تاریخ</label>
-              <DatePicker
-                v-model="form.date"
-                :class="{ error: errors.date }"
-                format="YYYY-MM-DD"
-                displayFormat="jYYYY/jMM/jDD"
-                placeholder="تاریخ را انتخاب کنید"
-                :persianDigits="true"
-              />
-              <span v-if="errors.date" class="error-message">
-                {{ errors.date }}
-              </span>
-            </div>
-
-            <div class="form-group">
               <label for="description">توضیحات</label>
               <textarea
                 id="description"
@@ -427,7 +405,7 @@ const getProductName = (productCode) => {
               <td class="number-cell">
                 {{ formatNumberWithSeparator(entrance.total_finished_cost) }}
               </td>
-              <td>{{ entrance.date }}</td>
+              <td>{{ new Date(entrance.date).toLocaleDateString("fa-IR") }}</td>
               <td>{{ entrance.description || "-" }}</td>
             </tr>
           </tbody>
